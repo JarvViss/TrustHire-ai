@@ -1,13 +1,11 @@
-import * as pdfParse from "pdf-parse";
-import fs from "fs";
+import { PDFParse } from "pdf-parse";
 
 export const extractTextFromPDF = async (
   filePath: string
 ): Promise<string> => {
+  const parser = new PDFParse({ url: filePath });
 
-  const buffer = fs.readFileSync(filePath);
+  const result = await parser.getText();
 
-  const data = await (pdfParse as any)(buffer);
-
-  return data.text;
+  return result.text;
 };

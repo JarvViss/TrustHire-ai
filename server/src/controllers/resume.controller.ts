@@ -1,49 +1,34 @@
-import { Request, Response } from "express";
-import Resume from "../models/Resume";
-import { extractTextFromPDF } from "../services/pdf.service";
+import { Response } from "express";
 import { AuthRequest } from "../middleware/auth.middleware";
+import { processResume } from "../services/resume.service";
 
 export const uploadResume = async (
   req: AuthRequest,
   res: Response
 ) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Resume required",
+      });
+    }
 
-  if (!req.file) {
+    const resume = await processResume(
+      req.userId!,
+      req.file
+    );
 
-    return res.status(400).json({
-
-      success:false,
-
-      message:"Resume required"
-
+    res.status(201).json({
+      success: true,
+      data: resume,
     });
+  } catch (error) {
+    console.error(error);
 
+    res.status(500).json({
+      success: false,
+      message: "Resume processing failed",
+    });
   }
-
-  const extractedText = await extractTextFromPDF(
-
-    req.file.path
-
-  );
-
-  const resume = await Resume.create({
-
-    user:req.userId,
-
-    originalName:req.file.originalname,
-
-    filePath:req.file.path,
-
-    extractedText
-
-  });
-
-  res.json({
-
-    success:true,
-
-    data:resume
-
-  });
-
 };

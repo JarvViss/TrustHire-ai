@@ -10,8 +10,11 @@ export interface IResume extends Document {
   extractedText: string;
 
   atsScore: number;
+  summary: string;
+  missingSkills: string[];
+  strengths: string[];
+  suggestions: string[];
 
-  aiFeedback: string;
 
   skills: string[];
 }
@@ -38,18 +41,32 @@ const resumeSchema = new Schema(
       type: String,
       default: "",
     },
-
     atsScore: {
       type: Number,
       default: 0,
     },
 
-    aiFeedback: {
+    summary: {
       type: String,
       default: "",
     },
 
     skills: {
+      type: [String],
+      default: [],
+    },
+
+    missingSkills: {
+      type: [String],
+      default: [],
+    },
+
+    strengths: {
+      type: [String],
+      default: [],
+    },
+
+    suggestions: {
       type: [String],
       default: [],
     },
