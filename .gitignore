@@ -1,0 +1,37 @@
+# Dependencies
+**/node_modules
+
+# Next.js
+**/.next
+
+# Build
+**/dist
+**/build
+
+# Hardhat
+**/artifacts
+**/cache
+**/typechain-types
+
+# Environment
+**/.env
+**/.env.local
+
+# Logs
+*.log
+
+# Coverage
+coverage
+
+# IDE
+.vscode
+
+# Uploads
+uploads
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
