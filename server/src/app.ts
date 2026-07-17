@@ -5,6 +5,7 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import userRoutes from "./routes/user.routes";
 import authRoutes from "./routes/auth.routes";
+import resumeRoutes from "./routes/resume.routes";
 import { errorHandler } from "./middleware/error.middleware";
 
 const app = express();
@@ -19,6 +20,8 @@ app.use(express.json());
 
 app.use(cookieParser());
 app.use("/api/users",userRoutes);
+app.use("/api/resume",resumeRoutes);
+app.use(errorHandler)
 
 app.get("/", (req, res) => {
   res.json({
