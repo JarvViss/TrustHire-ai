@@ -6,16 +6,16 @@ export const processResume = async (
   userId: string,
   file: Express.Multer.File
 ) => {
-  const extractedText = await extractTextFromPDF(file.path);
+  const extractedText =
+    await extractTextFromPDF(file.path);
 
-  const analysis = await analyzeResume(extractedText);
+  const analysis =
+    await analyzeResume(extractedText);
 
-  const resume = await Resume.create({
+  return await Resume.create({
     user: userId,
-    originalName: file.originalname,
-    filePath: file.path,
-    extractedText,
-
+    filename: file.originalname,
+    fileUrl: `/uploads/resumes/${file.filename}`,
     atsScore: analysis.atsScore,
     summary: analysis.summary,
     skills: analysis.skills,
@@ -23,6 +23,80 @@ export const processResume = async (
     strengths: analysis.strengths,
     suggestions: analysis.suggestions,
   });
+};
 
-  return resume;
+export const getUserResumes = async (
+  userId: string
+) => {
+  return Resume.find({
+    user: userId,
+  }).sort({
+    createdAt: -1,
+  });
+};
+
+export const getResumeStats = async (
+  userId: string
+) => {
+  const userResume = await Resume.findOne({
+    user: userId,
+  }).sort({ createdAt: -1 });
+
+  const yourScore = userResume?.atsScore ?? 0;
+
+  const atsAgg = await Resume.aggregate([
+    {
+      $group: {
+        _id: null,
+        average: { $avg: "$atsScore" },
+        allScores: { $push: "$atsScore" },
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const platformAverage =
+    atsAgg.length > 0
+      ? Math.round(atsAgg[0].average)
+      : 0;
+
+  let percentile = 0;
+
+  if (atsAgg.length > 0) {
+    const scores: number[] = atsAgg[0].allScores;
+    const below = scores.filter(
+      (s) => s < yourScore
+    ).length;
+    percentile = Math.round(
+      (below / scores.length) * 100
+    );
+  }
+
+  const skillsAgg = await Resume.aggregate([
+    { $unwind: "$skills" },
+    {
+      $group: {
+        _id: "$skills",
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { count: -1 } },
+    { $limit: 15 },
+    {
+      $project: {
+        _id: 0,
+        skill: "$_id",
+        count: 1,
+      },
+    },
+  ]);
+
+  return {
+    ats: {
+      yourScore,
+      platformAverage,
+      percentile,
+    },
+    skillsFrequency: skillsAgg,
+  };
 };

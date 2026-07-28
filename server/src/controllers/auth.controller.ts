@@ -11,11 +11,28 @@ export const register = async (
   try {
     const { name, email, password, role } = req.body;
 
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, email, and password are required",
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+    }
+
+    const validRoles = ["candidate", "recruiter"];
+    const userRole = validRoles.includes(role) ? role : "candidate";
+
     const data = await authService.registerUser(
       name,
       email,
       password,
-      role as UserRole
+      userRole as UserRole
     );
 
     res.status(201).json({

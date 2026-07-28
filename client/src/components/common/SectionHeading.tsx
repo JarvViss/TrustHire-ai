@@ -12,17 +12,17 @@ export default function SectionHeading({
   return (
     <div className="mx-auto mb-16 max-w-3xl text-center">
       {badge && (
-        <span className="rounded-full bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-700">
+        <span className="rounded-full bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
           {badge}
         </span>
       )}
 
-      <h2 className="mt-5 text-4xl font-bold tracking-tight">
+      <h2 className="mt-5 text-4xl font-bold tracking-tight dark:text-white">
         {title}
       </h2>
 
       {description && (
-        <p className="mt-4 text-lg text-slate-600">
+        <p className="mt-4 text-lg text-slate-600 dark:text-slate-400">
           {description}
         </p>
       )}

@@ -14,3 +14,24 @@ export interface Resume {
 
   createdAt: string;
 }
+export interface ResumeAnalysis {
+
+  _id: string;
+
+  filename: string;
+
+  atsScore: number;
+
+  summary: string;
+
+  skills: string[];
+
+  missingSkills: string[];
+
+  strengths: string[];
+
+  suggestions: string[];
+
+  createdAt: string;
+
+}

@@ -1,0 +1,174 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
+import api from "@/lib/api";
+import AuthGuard from "@/components/auth/AuthGuard";
+import Navbar from "@/components/layout/Navbar";
+import { Button } from "@/components/ui/button";
+import {
+  Calendar,
+  BarChart3,
+  Briefcase,
+  ArrowRight,
+} from "lucide-react";
+
+async function fetchJobHistory() {
+  const { data } = await api.get("/job/history");
+  return data.data;
+}
+
+export default function JobMatchHistoryPage() {
+  const { data: analyses, isLoading } = useQuery({
+    queryKey: ["jobHistory"],
+    queryFn: fetchJobHistory,
+  });
+
+  if (isLoading) {
+    return (
+      <AuthGuard>
+        <Navbar />
+        <div className="flex min-h-screen items-center justify-center text-xl dark:text-white">
+          Loading job match history...
+        </div>
+      </AuthGuard>
+    );
+  }
+
+  return (
+    <AuthGuard>
+      <Navbar />
+
+      <main className="mx-auto max-w-5xl px-6 py-10">
+        <div className="mb-8 flex items-center justify-between">
+          <h1 className="text-4xl font-black dark:text-white">
+            Job Match History
+          </h1>
+
+          <Link href="/job-match">
+            <Button>New Analysis</Button>
+          </Link>
+        </div>
+
+        {!analyses?.length ? (
+          <div className="rounded-3xl border border-slate-200 bg-white p-16 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+            <Briefcase className="mx-auto mb-4 h-12 w-12 text-slate-300 dark:text-slate-600" />
+            <h2 className="text-2xl font-bold dark:text-white">
+              No Job Matches Yet
+            </h2>
+            <p className="mt-3 text-slate-500 dark:text-slate-400">
+              Paste a job description to see how
+              well your resume matches.
+            </p>
+            <Link href="/job-match">
+              <Button className="mt-6">
+                Analyze Job Match
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {analyses.map((analysis: any) => (
+              <div
+                key={analysis._id}
+                className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-6">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 dark:bg-blue-900/30">
+                      <BarChart3 className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+                    </div>
+
+                    <div className="max-w-xl">
+                      <h3 className="text-lg font-bold dark:text-white">
+                        {analysis.jobDescription?.substring(
+                          0,
+                          100
+                        )}
+                        ...
+                      </h3>
+
+                      <div className="mt-1 flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {new Date(
+                            analysis.createdAt
+                          ).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-8">
+                    <div className="text-center">
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        Match
+                      </p>
+                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {analysis.matchScore}%
+                      </p>
+                    </div>
+
+                    <div className="text-center">
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        Readiness
+                      </p>
+                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {analysis.interviewReadiness}
+                        /10
+                      </p>
+                    </div>
+
+                    <ArrowRight className="h-5 w-5 text-slate-400" />
+                  </div>
+                </div>
+
+                {analysis.matchedSkills?.length >
+                  0 && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {analysis.matchedSkills
+                      .slice(0, 8)
+                      .map(
+                        (
+                          skill: string,
+                          i: number
+                        ) => (
+                          <span
+                            key={i}
+                            className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                          >
+                            {skill}
+                          </span>
+                        )
+                      )}
+                  </div>
+                )}
+
+                {analysis.missingSkills?.length >
+                  0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {analysis.missingSkills
+                      .slice(0, 5)
+                      .map(
+                        (
+                          skill: string,
+                          i: number
+                        ) => (
+                          <span
+                            key={i}
+                            className="rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600 dark:bg-red-900/30 dark:text-red-400"
+                          >
+                            Missing: {skill}
+                          </span>
+                        )
+                      )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+    </AuthGuard>
+  );
+}

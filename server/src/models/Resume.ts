@@ -1,54 +1,32 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose from "mongoose";
 
-export interface IResume extends Document {
-  user: mongoose.Types.ObjectId;
-
-  originalName: string;
-
-  filePath: string;
-
-  extractedText: string;
-
-  atsScore: number;
-  summary: string;
-  missingSkills: string[];
-  strengths: string[];
-  suggestions: string[];
-
-
-  skills: string[];
-}
-
-const resumeSchema = new Schema(
+const ResumeSchema = new mongoose.Schema(
   {
     user: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
 
-    originalName: {
+    filename: {
       type: String,
       required: true,
     },
 
-    filePath: {
-      type: String,
-      required: true,
-    },
-
-    extractedText: {
+    fileUrl: {
       type: String,
       default: "",
     },
+
     atsScore: {
       type: Number,
-      default: 0,
+      required: true,
     },
 
     summary: {
       type: String,
-      default: "",
+      required: true,
     },
 
     skills: {
@@ -76,4 +54,4 @@ const resumeSchema = new Schema(
   }
 );
 
-export default mongoose.model<IResume>("Resume", resumeSchema);
+export default mongoose.model("Resume", ResumeSchema);

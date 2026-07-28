@@ -8,6 +8,7 @@ export interface IUser extends Document {
   role: "candidate" | "recruiter" | "admin";
 
   profileImage: string;
+  coverImage: string;
 
   phone: string;
 
@@ -23,9 +24,15 @@ export interface IUser extends Document {
 
   portfolio: string;
 
+  verificationHash: string;
+
   location: string;
 
   isVerified: boolean;
+
+  resetToken: string;
+
+  resetTokenExpiry: Date;
 }
 
 const userSchema = new Schema<IUser>(
@@ -49,10 +56,16 @@ required:true
 role:{
 type:String,
 enum:["candidate","recruiter","admin"],
-default:"candidate"
+default:"candidate",
+index: true,
 },
 
 profileImage:{
+type:String,
+default:""
+},
+
+coverImage:{
 type:String,
 default:""
 },
@@ -92,6 +105,14 @@ type:String,
 default:""
 },
 
+
+verificationHash: {
+    type: String,
+    default: "",
+},
+
+
+
 location:{
 type:String,
 default:""
@@ -100,6 +121,16 @@ default:""
 isVerified:{
 type:Boolean,
 default:false
+},
+
+resetToken:{
+type:String,
+default:""
+},
+
+resetTokenExpiry:{
+type:Date,
+default:null
 }
 
 },

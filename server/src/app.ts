@@ -3,25 +3,41 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
-import userRoutes from "./routes/user.routes";
-import authRoutes from "./routes/auth.routes";
-import resumeRoutes from "./routes/resume.routes";
+import path from "path";
+
+import routes from "./routes";
 import { errorHandler } from "./middleware/error.middleware";
+import { generalRateLimit } from "./middleware/rateLimiter";
+import { mongoSanitize } from "./middleware/mongoSanitize";
 
 const app = express();
 
-app.use(cors());
+/* ---------- Global Middlewares ---------- */
 
-app.use(helmet());
-
-app.use(morgan("dev"));
+app.use(cors({
+  origin: process.env.CLIENT_URL || "http://localhost:3000",
+  credentials: true,
+}));
 
 app.use(express.json());
 
+app.use(express.urlencoded({ extended: true }));
+
+app.use(mongoSanitize);
+
 app.use(cookieParser());
-app.use("/api/users",userRoutes);
-app.use("/api/resume",resumeRoutes);
-app.use(errorHandler)
+
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+}));
+
+app.use(morgan("dev"));
+
+app.use(generalRateLimit);
+
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
+/* ---------- Health Check ---------- */
 
 app.get("/", (req, res) => {
   res.json({
@@ -29,7 +45,11 @@ app.get("/", (req, res) => {
   });
 });
 
-app.use("/api/auth", authRoutes);
+/* ---------- API Routes ---------- */
+
+app.use("/api", routes);
+
+/* ---------- Error Handler ---------- */
 
 app.use(errorHandler);
 

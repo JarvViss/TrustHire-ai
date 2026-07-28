@@ -2,7 +2,12 @@ import bcrypt from "bcryptjs";
 import User from "../models/User";
 import { generateToken } from "../utils/generateToken";
 
-type UserRole = "candidate" | "recruiter" | "admin";
+type UserRole = "candidate" | "recruiter";
+
+const sanitizeUser = (user: any) => {
+  const { password, ...safe } = user.toObject();
+  return safe;
+};
 
 export const registerUser = async (
   name: string,
@@ -16,19 +21,21 @@ export const registerUser = async (
     throw new Error("User already exists");
   }
 
+  const safeRole: UserRole = role === "recruiter" ? "recruiter" : "candidate";
+
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const user = await User.create({
     name,
     email,
     password: hashedPassword,
-    role,
+    role: safeRole,
   });
 
   const token = generateToken(user.id);
 
   return {
-    user,
+    user: sanitizeUser(user),
     token,
   };
 };
@@ -55,7 +62,7 @@ export const loginUser = async (
   const token = generateToken(user.id);
 
   return {
-    user,
+    user: sanitizeUser(user),
     token,
   };
 };

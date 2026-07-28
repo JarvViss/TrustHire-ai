@@ -1,15 +1,103 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 html {
   scroll-behavior: smooth;
 }
 
 body {
-  background: #f8fafc;
+  background: #ffffff;
   color: #0f172a;
-  font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.2s, color 0.2s;
 }
 
-* {
-  box-sizing: border-box;
+.dark body,
+body.dark {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+::selection {
+  background: #2563eb;
+  color: white;
+}
+
+/* Beautiful grid background */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(0,0,0,.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0,0,0,.04) 1px, transparent 1px);
+  background-size: 42px 42px;
+}
+
+.dark .bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,.06) 1px, transparent 1px);
+  background-size: 42px 42px;
+}
+
+/* Blue glow */
+.hero-glow {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 9999px;
+  background: rgba(37,99,235,.12);
+  filter: blur(120px);
+}
+
+/* Dark mode: cards, borders, and common containers */
+.dark nav,
+.dark footer,
+.dark header {
+  border-color: #1e293b;
+}
+
+.dark .rounded-3xl,
+.dark .rounded-2xl,
+.dark .rounded-xl {
+  border-color: #1e293b;
+}
+
+/* Dark mode: select elements */
+.dark select {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+/* Dark mode: tables */
+.dark table {
+  color: #e2e8f0;
+}
+
+.dark thead {
+  background-color: #1e293b;
+}
+
+.dark tbody tr {
+  border-color: #1e293b;
+}
+
+.dark tbody tr:hover {
+  background-color: #1e293b;
+}
+
+/* Dark mode: hr elements */
+.dark hr {
+  border-color: #1e293b;
+}
+
+/* Dark mode: links */
+.dark a.text-slate-500,
+.dark a.text-slate-600 {
+  color: #94a3b8;
+}
+
+/* Dark mode: code blocks */
+.dark code {
+  background-color: #1e293b;
+  color: #e2e8f0;
 }

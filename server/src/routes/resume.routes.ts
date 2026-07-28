@@ -3,21 +3,48 @@ import { Router } from "express";
 import upload from "../middleware/upload.middleware";
 
 import { protect } from "../middleware/auth.middleware";
+import { aiRateLimit } from "../middleware/rateLimiter";
 
-import { uploadResume } from "../controllers/resume.controller";
+import {
+  uploadResume,
+  getResumeHistory,
+  getResumeById,
+  deleteResume,
+  getStats,
+} from "../controllers/resume.controller";
 
-const router=Router();
+const router = Router();
 
 router.post(
+  "/upload",
+  protect,
+  aiRateLimit,
+  upload.single("resume"),
+  uploadResume
+);
 
-"/upload",
+router.get(
+  "/history",
+  protect,
+  getResumeHistory
+);
 
-protect,
+router.get(
+  "/stats",
+  protect,
+  getStats
+);
 
-upload.single("resume"),
+router.get(
+  "/:id",
+  protect,
+  getResumeById
+);
 
-uploadResume
-
+router.delete(
+  "/:id",
+  protect,
+  deleteResume
 );
 
 export default router;

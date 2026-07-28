@@ -1,22 +1,21 @@
-import { api } from "./api";
+import api from "@/lib/axios";
 
-export interface RegisterData {
+export const registerUser = async (data: {
   name: string;
   email: string;
   password: string;
-  role: "candidate" | "recruiter";
-}
+  role: string;
+}) => {
+  const res = await api.post("/auth/register", data);
 
-export interface LoginData {
+  return res.data.data;
+};
+
+export const loginUser = async (data: {
   email: string;
   password: string;
-}
+}) => {
+  const res = await api.post("/auth/login", data);
 
-export const registerUser = (data: RegisterData) =>
-  api.post("/auth/register", data);
-
-export const loginUser = (data: LoginData) =>
-  api.post("/auth/login", data);
-
-export const getProfile = () =>
-  api.get("/auth/profile");
+  return res.data.data;
+};
