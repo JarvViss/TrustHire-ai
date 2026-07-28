@@ -126,7 +126,6 @@ export default function SkillsChart({
               dataKey="count"
               radius={[0, 6, 6, 0]}
               barSize={24}
-              barGap={0}
             >
               {data.map((entry, index) => (
                 <Cell
@@ -142,7 +141,7 @@ export default function SkillsChart({
               <LabelList
                 dataKey="count"
                 position="right"
-                formatter={(v: number) => `${v}`}
+                formatter={(v) => `${v}`}
                 style={{
                   fontWeight: 600,
                   fontSize: 11,
