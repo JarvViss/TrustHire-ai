@@ -103,7 +103,7 @@ export const getResumeById = async (
   try {
 
     const resume = await Resume.findOne({
-      _id: req.params.id,
+      _id: String(req.params.id),
       user: req.userId,
     });
 
@@ -138,7 +138,7 @@ export const deleteResume = async (
   try {
 
     const resume = await Resume.findOneAndDelete({
-      _id: req.params.id,
+      _id: String(req.params.id),
       user: req.userId,
     });
 

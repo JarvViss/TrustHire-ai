@@ -81,7 +81,7 @@ export async function updateUserRole(
     }
 
     const user = await User.findByIdAndUpdate(
-      req.params.id,
+      String(req.params.id),
       { role },
       { new: true }
     ).select("-password");
@@ -108,7 +108,7 @@ export async function deleteUser(
   next: NextFunction
 ) {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const user = await User.findByIdAndDelete(String(req.params.id));
 
     if (!user) {
       return res.status(404).json({
@@ -117,10 +117,11 @@ export async function deleteUser(
       });
     }
 
+    const userId = String(req.params.id);
     await Promise.all([
-      Resume.deleteMany({ user: req.params.id }),
-      Interview.deleteMany({ user: req.params.id }),
-      JobAnalysis.deleteMany({ user: req.params.id }),
+      Resume.deleteMany({ user: userId }),
+      Interview.deleteMany({ user: userId }),
+      JobAnalysis.deleteMany({ user: userId }),
     ]);
 
     res.json({

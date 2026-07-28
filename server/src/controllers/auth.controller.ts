@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import * as authService from "../services/auth.service";
 
-type UserRole = "candidate" | "recruiter" | "admin";
+type UserRole = "candidate" | "recruiter";
 
 export const register = async (
   req: Request,

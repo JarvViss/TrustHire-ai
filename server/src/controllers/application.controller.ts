@@ -69,7 +69,7 @@ export async function updateStatus(
 
     const application =
       await updateApplicationStatus(
-        req.params.id,
+        String(req.params.id),
         status,
         notes
       );

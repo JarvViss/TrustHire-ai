@@ -37,7 +37,7 @@ export async function markNotificationRead(
   res: Response
 ) {
   try {
-    await markAsRead(req.userId!, req.params.id);
+    await markAsRead(req.userId!, String(req.params.id));
     res.json({ success: true });
   } catch {
     res.status(500).json({

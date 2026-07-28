@@ -81,7 +81,7 @@ export async function cancelInterview(
 ) {
   try {
     const schedule = await cancelSchedule(
-      req.params.id,
+      String(req.params.id),
       req.userId!
     );
 

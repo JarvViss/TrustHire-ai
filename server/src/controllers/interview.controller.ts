@@ -132,7 +132,7 @@ export async function getInterview(
 ) {
   try {
     const interview = await Interview.findOne({
-      _id: req.params.id,
+      _id: String(req.params.id),
       user: req.userId,
     });
 

@@ -51,7 +51,7 @@ export async function getCandidateById(
 ) {
   try {
     const candidate = await getCandidateProfile(
-      req.params.id
+      String(req.params.id)
     );
 
     res.json({
@@ -73,7 +73,7 @@ export async function updateCandidateStatus(
     const { status, notes } = req.body;
 
     const candidate = await changeCandidateStatus(
-      req.params.id,
+      String(req.params.id),
       req.userId!,
       status,
       notes ?? ""
@@ -97,7 +97,7 @@ export async function verifyCandidateBlockchain(
 ) {
   try {
     const candidate = await verifyCandidate(
-      req.params.id
+      String(req.params.id)
     );
 
     res.json({

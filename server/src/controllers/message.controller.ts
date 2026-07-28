@@ -46,11 +46,11 @@ export async function getConversationHandler(
   try {
     const messages = await getConversation(
       req.userId!,
-      req.params.userId
+      String(req.params.userId)
     );
 
     await markConversationRead(
-      req.params.userId,
+      String(req.params.userId),
       req.userId!
     );
 
