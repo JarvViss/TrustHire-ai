@@ -115,7 +115,7 @@ export default function SkillsChart({
             />
 
             <Tooltip
-              formatter={(value: number) => [
+              formatter={(value) => [
                 `${value} resumes`,
                 "Found in",
               ]}
