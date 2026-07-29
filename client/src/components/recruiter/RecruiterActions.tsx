@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import api from "@/lib/axios";
 import {
@@ -52,6 +53,7 @@ export default function RecruiterActions({
   candidate,
   onStatusChange,
 }: Props) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [selectedStatus, setSelectedStatus] =
@@ -98,6 +100,13 @@ export default function RecruiterActions({
         );
         setShowNotes(false);
         setNotes("");
+
+        if (selectedStatus === "INTERVIEW") {
+          router.push(
+            `/schedule?candidateId=${candidate.user._id}`
+          );
+        }
+
         onStatusChange?.(selectedStatus);
       } else {
         toast.error(

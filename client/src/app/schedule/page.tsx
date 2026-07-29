@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import api from "@/lib/api";
 import RecruiterGuard from "@/components/auth/RecruiterGuard";
@@ -9,11 +10,15 @@ import Navbar from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Clock, Video, Phone, MapPin } from "lucide-react";
+import Link from "next/link";
+import { Calendar, Clock, Video, Phone, MapPin, User, ArrowLeft } from "lucide-react";
 
 export default function SchedulePage() {
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+  const [candidateName, setCandidateName] = useState("");
+  const [candidateEmail, setCandidateEmail] = useState("");
   const [form, setForm] = useState({
     candidateId: "",
     scheduledAt: "",
@@ -21,6 +26,23 @@ export default function SchedulePage() {
     type: "ONLINE",
     notes: "",
   });
+
+  useEffect(() => {
+    const candidateId = searchParams.get("candidateId");
+    if (candidateId) {
+      setForm((prev) => ({ ...prev, candidateId }));
+      setShowForm(true);
+
+      api
+        .get(`/recruiter/candidate/${candidateId}`)
+        .then((res) => {
+          const user = res.data.candidate?.user;
+          setCandidateName(user?.name ?? "");
+          setCandidateEmail(user?.email ?? "");
+        })
+        .catch(() => {});
+    }
+  }, [searchParams]);
 
   const { data: schedule } = useQuery({
     queryKey: ["schedule"],
@@ -77,9 +99,11 @@ export default function SchedulePage() {
             Interview Schedule
           </h1>
 
-          <Button onClick={() => setShowForm(!showForm)}>
-            {showForm ? "Cancel" : "Schedule Interview"}
-          </Button>
+          {form.candidateId && (
+            <Button onClick={() => setShowForm(!showForm)}>
+              {showForm ? "Cancel" : "Schedule Interview"}
+            </Button>
+          )}
         </div>
 
         {showForm && (
@@ -95,22 +119,41 @@ export default function SchedulePage() {
               }}
               className="space-y-4"
             >
-              <div>
-                <label className="mb-2 block text-sm font-semibold dark:text-slate-300">
-                  Candidate ID
-                </label>
-                <Input
-                  placeholder="Candidate user ID"
-                  value={form.candidateId}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      candidateId: e.target.value,
-                    })
-                  }
-                  required
-                />
-              </div>
+              {form.candidateId ? (
+                <div className="rounded-2xl border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-green-700 dark:text-green-400">
+                    Scheduling Interview For
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <User className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    <div>
+                      <p className="font-semibold text-green-800 dark:text-green-200">
+                        {candidateName || "Loading..."}
+                      </p>
+                      {candidateEmail && (
+                        <p className="text-sm text-green-600 dark:text-green-400">
+                          {candidateEmail}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-slate-800">
+                  <User className="mx-auto mb-3 h-8 w-8 text-slate-400" />
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Go to a candidate's profile and click{" "}
+                    <strong>Schedule Interview</strong> to get started.
+                  </p>
+                  <Link
+                    href="/recruiter/dashboard"
+                    className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    Browse Candidates
+                  </Link>
+                </div>
+              )}
 
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
