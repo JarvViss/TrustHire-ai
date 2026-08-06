@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { Response, NextFunction } from "express";
 
 import Resume from "../models/Resume";
 import User from "../models/User";
@@ -8,12 +8,14 @@ import { AuthRequest } from "../middleware/auth.middleware";
 import {
   processResume,
   getResumeStats,
+  deleteResumeFile,
 } from "../services/resume.service";
 import { createNotification } from "../services/notification.service";
 
 export const uploadResume = async (
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
     if (!req.file) {
@@ -55,20 +57,14 @@ export const uploadResume = async (
     });
 
   } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: "Resume processing failed",
-    });
-
+    next(error);
   }
 };
 
 export const getResumeHistory = async (
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
 
@@ -85,20 +81,14 @@ export const getResumeHistory = async (
     });
 
   } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch history",
-    });
-
+    next(error);
   }
 };
 
 export const getResumeById = async (
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
 
@@ -120,20 +110,14 @@ export const getResumeById = async (
     });
 
   } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed",
-    });
-
+    next(error);
   }
 };
 
 export const deleteResume = async (
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
 
@@ -149,26 +133,22 @@ export const deleteResume = async (
       });
     }
 
+    await deleteResumeFile(resume.fileUrl);
+
     res.json({
       success: true,
       message: "Resume deleted",
     });
 
   } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: "Delete failed",
-    });
-
+    next(error);
   }
 };
 
 export const getStats = async (
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
     const stats = await getResumeStats(
@@ -180,11 +160,6 @@ export const getStats = async (
       data: stats,
     });
   } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch stats",
-    });
+    next(error);
   }
 };

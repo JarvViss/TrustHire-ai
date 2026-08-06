@@ -5,15 +5,18 @@ import { useDropzone } from "react-dropzone";
 import { UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { useUploadResume } from "@/hooks/useUploadResume";
 import { useResumeStore } from "@/store/resume.store";
+import { RESUME_KEYS } from "@/constants/queryKeys";
 
 export default function UploadBox() {
   const [file, setFile] = useState<File | null>(null);
 
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const mutation = useUploadResume();
 
@@ -41,6 +44,15 @@ export default function UploadBox() {
       const result = await mutation.mutateAsync(file);
 
       setAnalysis(result.data);
+
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: RESUME_KEYS.history,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: RESUME_KEYS.stats,
+        }),
+      ]);
 
       toast.success("Resume analyzed successfully!");
 

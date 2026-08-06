@@ -111,11 +111,15 @@ export default function CandidateList({
             <option value="Not Interviewed">
               Not Interviewed
             </option>
-            <option value="Hire">Hire</option>
-            <option value="Strong Hire">
-              Strong Hire
+            <option value="Recommended">
+              Recommended
             </option>
-            <option value="Maybe">Maybe</option>
+            <option value="Borderline">
+              Borderline
+            </option>
+            <option value="Not Recommended">
+              Not Recommended
+            </option>
           </select>
 
           <select

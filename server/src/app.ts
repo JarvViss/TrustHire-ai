@@ -5,6 +5,8 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import path from "path";
 
+import "./config/env";
+
 import routes from "./routes";
 import { errorHandler } from "./middleware/error.middleware";
 import { generalRateLimit } from "./middleware/rateLimiter";
@@ -14,9 +16,24 @@ const app = express();
 
 /* ---------- Global Middlewares ---------- */
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+];
+
+const clientUrl = process.env.CLIENT_URL?.replace(/\/$/, "");
+
+if (clientUrl) {
+  allowedOrigins.push(clientUrl);
+}
+
 app.use(cors({
   origin: (origin, cb) => {
-    cb(null, origin?.replace(/\/$/, "") || true);
+    if (!origin || allowedOrigins.includes(origin)) {
+      return cb(null, true);
+    }
+
+    return cb(new Error("Not allowed by CORS"));
   },
   credentials: true,
 }));

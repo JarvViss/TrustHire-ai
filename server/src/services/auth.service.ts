@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import User from "../models/User";
 import { generateToken } from "../utils/generateToken";
+import { ApiError } from "../utils/ApiError";
 
 type UserRole = "candidate" | "recruiter";
 
@@ -18,7 +19,7 @@ export const registerUser = async (
   const exists = await User.findOne({ email });
 
   if (exists) {
-    throw new Error("User already exists");
+    throw new ApiError(409, "User already exists");
   }
 
   const safeRole: UserRole = role === "recruiter" ? "recruiter" : "candidate";
@@ -47,7 +48,7 @@ export const loginUser = async (
   const user = await User.findOne({ email });
 
   if (!user) {
-    throw new Error("Invalid credentials");
+    throw new ApiError(401, "Invalid credentials");
   }
 
   const isMatch = await bcrypt.compare(
@@ -56,7 +57,7 @@ export const loginUser = async (
   );
 
   if (!isMatch) {
-    throw new Error("Invalid credentials");
+    throw new ApiError(401, "Invalid credentials");
   }
 
   const token = generateToken(user.id);

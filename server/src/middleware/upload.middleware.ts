@@ -2,10 +2,10 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-const uploadDir = "uploads";
+const uploadDir = "uploads/resumes";
 
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 const storage = multer.diskStorage({
@@ -14,9 +14,13 @@ const storage = multer.diskStorage({
   },
 
   filename(req, file, cb) {
+    const safeName = file.originalname
+      .replace(/[^a-zA-Z0-9._-]/g, "_")
+      .slice(0, 80);
+
     cb(
       null,
-      Date.now() + path.extname(file.originalname)
+      `${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeName}`
     );
   },
 });

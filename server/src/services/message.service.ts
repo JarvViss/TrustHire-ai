@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Message from "../models/Message";
 
 export async function sendMessage(
@@ -25,12 +26,14 @@ export async function getConversation(
 export async function getConversations(
   userId: string
 ) {
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
   const messages = await Message.aggregate([
     {
       $match: {
         $or: [
-          { sender: userId },
-          { receiver: userId },
+          { sender: userObjectId },
+          { receiver: userObjectId },
         ],
       },
     },
@@ -39,7 +42,7 @@ export async function getConversations(
       $group: {
         _id: {
           $cond: [
-            { $eq: ["$sender", userId] },
+            { $eq: ["$sender", userObjectId] },
             "$receiver",
             "$sender",
           ],
@@ -50,7 +53,7 @@ export async function getConversations(
             $cond: [
               {
                 $and: [
-                  { $eq: ["$receiver", userId] },
+                  { $eq: ["$receiver", userObjectId] },
                   { $eq: ["$read", false] },
                 ],
               },

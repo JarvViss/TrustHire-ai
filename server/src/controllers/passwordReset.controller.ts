@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import {
   generateResetToken,
   resetPassword,
@@ -6,7 +6,8 @@ import {
 
 export const forgotPassword = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
     const { email } = req.body;
@@ -24,17 +25,15 @@ export const forgotPassword = async (
       success: true,
       ...result,
     });
-  } catch (err: any) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+  } catch (err) {
+    next(err);
   }
 };
 
 export const resetPasswordHandler = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
     const { token, password } = req.body;
@@ -60,10 +59,7 @@ export const resetPasswordHandler = async (
       success: true,
       ...result,
     });
-  } catch (err: any) {
-    res.status(400).json({
-      success: false,
-      message: err.message,
-    });
+  } catch (err) {
+    next(err);
   }
 };

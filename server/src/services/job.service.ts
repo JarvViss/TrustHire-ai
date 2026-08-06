@@ -1,6 +1,7 @@
 import Resume from "../models/Resume";
 import JobAnalysis from "../models/JobAnalysis";
 import { analyzeJobMatch } from "./ai.service";
+import { ApiError } from "../utils/ApiError";
 
 export const analyzeJob = async (
   userId: string,
@@ -10,7 +11,7 @@ export const analyzeJob = async (
   const resume = await Resume.findById(resumeId);
 
   if (!resume) {
-    throw new Error("Resume not found");
+    throw new ApiError(404, "Resume not found");
   }
 
   const analysis = await analyzeJobMatch(

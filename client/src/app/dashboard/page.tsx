@@ -20,6 +20,7 @@ import SkillsChart from "@/components/dashboard/charts/SkillsChart";
 import { useResumeStore } from "@/store/resume.store";
 import { useMyResumes } from "@/hooks/useMyResumes";
 import { getResumeStats } from "@/services/resume.service";
+import { RESUME_KEYS } from "@/constants/queryKeys";
 
 export default function DashboardPage() {
   const { analysis, setAnalysis } =
@@ -27,8 +28,8 @@ export default function DashboardPage() {
 
   const { data, isLoading } = useMyResumes();
 
-  const { data: statsData } = useQuery({
-    queryKey: ["resume-stats"],
+  const { data: statsData, isError } = useQuery({
+    queryKey: RESUME_KEYS.stats,
     queryFn: getResumeStats,
     enabled: !!analysis,
   });
@@ -102,7 +103,9 @@ export default function DashboardPage() {
               </h2>
 
               <div className="flex h-64 items-center justify-center text-slate-400">
-                Loading stats...
+                {isError
+                  ? "Could not load stats."
+                  : "Loading stats..."}
               </div>
             </div>
           )}
@@ -119,7 +122,9 @@ export default function DashboardPage() {
               </h2>
 
               <div className="flex h-96 items-center justify-center text-slate-400">
-                Loading stats...
+                {isError
+                  ? "Could not load stats."
+                  : "Loading stats..."}
               </div>
             </div>
           )}

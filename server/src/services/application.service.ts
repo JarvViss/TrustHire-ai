@@ -1,6 +1,17 @@
 import Application from "../models/Application";
 import { analyzeJobMatch } from "./ai.service";
 import Resume from "../models/Resume";
+import { ApiError } from "../utils/ApiError";
+
+const VALID_STATUSES = [
+  "APPLIED",
+  "UNDER_REVIEW",
+  "SHORTLISTED",
+  "INTERVIEW",
+  "OFFERED",
+  "REJECTED",
+  "WITHDRAWN",
+];
 
 export async function createApplication(
   candidateId: string,
@@ -48,12 +59,26 @@ export async function updateApplicationStatus(
   status: string,
   notes?: string
 ) {
+  if (!VALID_STATUSES.includes(status)) {
+    throw new ApiError(
+      400,
+      `Invalid status. Allowed: ${VALID_STATUSES.join(", ")}`
+    );
+  }
+
   const update: Record<string, string> = { status };
   if (notes !== undefined) update.notes = notes;
 
-  return Application.findByIdAndUpdate(
-    applicationId,
-    update,
-    { new: true }
-  );
+  const application =
+    await Application.findByIdAndUpdate(
+      applicationId,
+      update,
+      { new: true }
+    );
+
+  if (!application) {
+    throw new ApiError(404, "Application not found");
+  }
+
+  return application;
 }

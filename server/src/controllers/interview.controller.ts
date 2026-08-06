@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { Response, NextFunction } from "express";
 
 import { AuthRequest } from "../middleware/auth.middleware";
 
@@ -11,7 +11,8 @@ import {
 
 export async function createInterview(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
   try {
     const { role } = req.body;
@@ -32,20 +33,15 @@ export async function createInterview(
       success: true,
       data: interview,
     });
-  } catch (error: any) {
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message:
-        error.message || "Failed to start interview",
-    });
+  } catch (error) {
+    next(error);
   }
 }
 
 export async function answerInterview(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
   try {
     const { interviewId, answer } = req.body;
@@ -80,23 +76,8 @@ export async function answerInterview(
       success: true,
       data: interview,
     });
-  } catch (error: any) {
-    console.error(error);
-
-    const message = error.message || "Interview failed";
-    const status =
-      message === "Unauthorized"
-        ? 403
-        : message === "Interview not found"
-        ? 404
-        : message === "Interview is no longer active"
-        ? 400
-        : 500;
-
-    return res.status(status).json({
-      success: false,
-      message,
-    });
+  } catch (error) {
+    next(error);
   }
 }
 

@@ -9,6 +9,20 @@ interface RateLimitStore {
 
 const store: RateLimitStore = {};
 
+const CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
+
+const cleanupTimer = setInterval(() => {
+  const now = Date.now();
+
+  for (const key of Object.keys(store)) {
+    if (now > store[key].resetTime) {
+      delete store[key];
+    }
+  }
+}, CLEANUP_INTERVAL_MS);
+
+cleanupTimer.unref?.();
+
 export function rateLimit({
   windowMs = 60 * 1000,
   max = 60,

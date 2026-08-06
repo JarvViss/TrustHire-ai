@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -14,6 +14,20 @@ import Link from "next/link";
 import { Calendar, Clock, Video, Phone, MapPin, User, ArrowLeft } from "lucide-react";
 
 export default function SchedulePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
+          <div className="text-lg text-slate-500">Loading...</div>
+        </div>
+      }
+    >
+      <ScheduleContent />
+    </Suspense>
+  );
+}
+
+function ScheduleContent() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);

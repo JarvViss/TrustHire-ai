@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { Response, NextFunction } from "express";
 import { AuthRequest } from "../middleware/auth.middleware";
 import User from "../models/User";
 import {
@@ -10,7 +10,8 @@ import {
 
 export async function createSchedule(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
   try {
     const {
@@ -42,22 +43,34 @@ export async function createSchedule(
       success: true,
       data: schedule,
     });
-  } catch (err: any) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+  } catch (err) {
+    next(err);
   }
 }
 
 export async function getMySchedule(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
   try {
     const dbUser = await User.findById(req.userId).select("role");
-    const isRecruiter =
-      dbUser?.role === "recruiter";
+
+    if (!dbUser) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    if (dbUser.role !== "recruiter" && dbUser.role !== "candidate") {
+      return res.json({
+        success: true,
+        data: [],
+      });
+    }
+
+    const isRecruiter = dbUser.role === "recruiter";
 
     const schedule = isRecruiter
       ? await getRecruiterSchedule(req.userId!)
@@ -67,17 +80,15 @@ export async function getMySchedule(
       success: true,
       data: schedule,
     });
-  } catch (err: any) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+  } catch (err) {
+    next(err);
   }
 }
 
 export async function cancelInterview(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
   try {
     const schedule = await cancelSchedule(
@@ -96,10 +107,7 @@ export async function cancelInterview(
       success: true,
       data: schedule,
     });
-  } catch (err: any) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+  } catch (err) {
+    next(err);
   }
 }

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { protect } from "../middleware/auth.middleware";
+import { recruiterOnly } from "../middleware/recruiter.middleware";
 import { aiRateLimit } from "../middleware/rateLimiter";
 import {
   applyToJob,
@@ -13,6 +14,6 @@ router.use(protect);
 
 router.post("/", aiRateLimit, applyToJob);
 router.get("/", getMyApplications);
-router.patch("/:id/status", updateStatus);
+router.patch("/:id/status", recruiterOnly, updateStatus);
 
 export default router;

@@ -12,8 +12,6 @@ const ALLOWED_PROFILE_FIELDS = [
   "linkedin",
   "portfolio",
   "location",
-  "profileImage",
-  "coverImage",
 ];
 
 export const getProfile = async (

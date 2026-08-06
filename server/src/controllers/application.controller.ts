@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { Response, NextFunction } from "express";
 import { AuthRequest } from "../middleware/auth.middleware";
 import {
   createApplication,
@@ -8,7 +8,8 @@ import {
 
 export async function applyToJob(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
   try {
     const { jobTitle, company, jobDescription } =
@@ -32,17 +33,15 @@ export async function applyToJob(
       success: true,
       data: application,
     });
-  } catch (err: any) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+  } catch (err) {
+    next(err);
   }
 }
 
 export async function getMyApplications(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
   try {
     const applications =
@@ -52,20 +51,25 @@ export async function getMyApplications(
       success: true,
       data: applications,
     });
-  } catch (err: any) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+  } catch (err) {
+    next(err);
   }
 }
 
 export async function updateStatus(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
   try {
     const { status, notes } = req.body;
+
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: "Status is required",
+      });
+    }
 
     const application =
       await updateApplicationStatus(
@@ -78,10 +82,7 @@ export async function updateStatus(
       success: true,
       data: application,
     });
-  } catch (err: any) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+  } catch (err) {
+    next(err);
   }
 }

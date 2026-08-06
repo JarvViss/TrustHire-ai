@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import Interview from "../models/Interview";
 import Resume from "../models/Resume";
 import { createNotification } from "./notification.service";
+import { ApiError } from "../utils/ApiError";
 
 const client = new OpenAI({
   apiKey: process.env.GROQ_API_KEY!,
@@ -31,6 +32,16 @@ function safeParseJSON(text: string): any {
     );
   }
 }
+
+function clampScore(value: any, fallback = 0): number {
+  const num = Number(value);
+
+  if (!Number.isFinite(num)) return fallback;
+
+  return Math.min(10, Math.max(0, num));
+}
+
+const inFlightAnswers = new Set<string>();
 
 function getDifficulty(question: number) {
   switch (question) {
@@ -72,7 +83,7 @@ export async function startInterview(
   });
 
   if (!resume) {
-    throw new Error("Resume not found");
+    throw new ApiError(404, "Resume not found");
   }
 
   const prompt = `
@@ -169,15 +180,16 @@ export async function submitAnswer(
   );
 
   if (!interview) {
-    throw new Error("Interview not found");
+    throw new ApiError(404, "Interview not found");
   }
 
   if (interview.user.toString() !== userId) {
-    throw new Error("Unauthorized");
+    throw new ApiError(403, "Unauthorized");
   }
 
   if (interview.status !== "ACTIVE") {
-    throw new Error(
+    throw new ApiError(
+      400,
       "Interview is no longer active"
     );
   }
@@ -189,7 +201,7 @@ export async function submitAnswer(
   });
 
   if (!resume) {
-    throw new Error("Resume not found");
+    throw new ApiError(404, "Resume not found");
   }
 
   const current = interview.currentQuestion;
@@ -198,13 +210,28 @@ export async function submitAnswer(
     current < 0 ||
     current >= interview.conversation.length
   ) {
-    throw new Error(
+    throw new ApiError(
+      400,
       "Interview state is corrupted"
     );
   }
 
+  const lockKey = `${interviewId}:${current}`;
+
+  if (inFlightAnswers.has(lockKey)) {
+    throw new ApiError(
+      409,
+      "Your answer is still being processed. Please wait."
+    );
+  }
+
+  inFlightAnswers.add(lockKey);
+
   interview.conversation[current].answer = answer;
 
+  await interview.save();
+
+  try {
   const history = buildHistory(
     interview.conversation
   );
@@ -326,7 +353,7 @@ Return ONLY JSON.
     const parsed = safeParseJSON(content);
 
     interview.conversation[current].score =
-      parsed.score ?? 0;
+      clampScore(parsed.score);
 
     interview.conversation[current].feedback =
       parsed.feedback ?? "";
@@ -449,7 +476,7 @@ Return ONLY JSON.
   const evalParsed = safeParseJSON(evalContent);
 
   interview.conversation[current].score =
-    evalParsed.score ?? 0;
+    clampScore(evalParsed.score);
 
   interview.conversation[current].feedback =
     evalParsed.feedback ?? "";
@@ -584,11 +611,12 @@ Return ONLY valid JSON.
   interview.status = "COMPLETED";
 
   interview.result = {
-    technical: parsedFinal.technical ?? 0,
-    communication:
-      parsedFinal.communication ?? 0,
-    confidence: parsedFinal.confidence ?? 0,
-    overall: parsedFinal.overall ?? 0,
+    technical: clampScore(parsedFinal.technical),
+    communication: clampScore(
+      parsedFinal.communication
+    ),
+    confidence: clampScore(parsedFinal.confidence),
+    overall: clampScore(parsedFinal.overall),
     recommendation:
       parsedFinal.recommendation ?? "Not Recommended",
     strengths: parsedFinal.strengths ?? [],
@@ -602,10 +630,13 @@ Return ONLY valid JSON.
   await createNotification(
     interview.user.toString(),
     "Interview Complete",
-    `Your ${interview.role} interview has been scored. Overall: ${parsedFinal.overall ?? 0}/10`,
+    `Your ${interview.role} interview has been scored. Overall: ${interview.result.overall}/10`,
     "INTERVIEW_COMPLETE",
     "/interview/history"
   );
 
   return interview;
+  } finally {
+    inFlightAnswers.delete(lockKey);
+  }
 }

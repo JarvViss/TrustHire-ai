@@ -37,6 +37,6 @@ router.use("/applications", applicationRoutes);
 
 router.use("/schedule", interviewScheduleRoutes);
 
-router.use(passwordResetRoutes);
+router.use("/auth", passwordResetRoutes);
 
 export default router;

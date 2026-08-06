@@ -4,6 +4,7 @@ import "../config/env";
 const client = new OpenAI({
   apiKey: process.env.GROQ_API_KEY!,
   baseURL: "https://api.groq.com/openai/v1",
+  timeout: 30000,
 });
 
 export interface ResumeAnalysis {
@@ -29,7 +30,33 @@ const parseJSON = (content: string) => {
     .replace(/```/g, "")
     .trim();
 
-  return JSON.parse(cleaned);
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+
+    if (start !== -1 && end !== -1 && end > start) {
+      return JSON.parse(cleaned.slice(start, end + 1));
+    }
+
+    throw new Error("Failed to parse AI response as JSON");
+  }
+};
+
+const clamp = (value: any, fallback = 0, max = 100): number => {
+  const num = Number(value);
+
+  if (!Number.isFinite(num)) return fallback;
+
+  return Math.min(max, Math.max(0, num));
+};
+
+const asStringArray = (value: any): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item) => typeof item === "string")
+    .slice(0, 50);
 };
 
 export const analyzeResume = async (
@@ -75,7 +102,19 @@ ${resumeText}
   const content =
     completion.choices[0].message.content ?? "";
 
-  return parseJSON(content);
+  const parsed = parseJSON(content);
+
+  return {
+    atsScore: clamp(parsed.atsScore),
+    summary:
+      typeof parsed.summary === "string"
+        ? parsed.summary
+        : "",
+    skills: asStringArray(parsed.skills),
+    missingSkills: asStringArray(parsed.missingSkills),
+    strengths: asStringArray(parsed.strengths),
+    suggestions: asStringArray(parsed.suggestions),
+  };
 };
 
 export const analyzeJobMatch = async (
@@ -83,7 +122,6 @@ export const analyzeJobMatch = async (
   skills: string[],
   jobDescription: string
 ): Promise<JobAnalysis> => {
- 
  const prompt = `
 You are a Senior Technical Recruiter and ATS Expert.
 
@@ -156,5 +194,16 @@ Return ONLY JSON.
   const content =
     completion.choices[0].message.content ?? "";
 
-  return parseJSON(content);
+  const parsed = parseJSON(content);
+
+  return {
+    matchScore: clamp(parsed.matchScore),
+    matchedSkills: asStringArray(parsed.matchedSkills),
+    missingSkills: asStringArray(parsed.missingSkills),
+    recommendation:
+      typeof parsed.recommendation === "string"
+        ? parsed.recommendation
+        : "",
+    interviewReadiness: clamp(parsed.interviewReadiness, 0, 10),
+  };
 };

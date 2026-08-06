@@ -38,6 +38,14 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "trusthire-auth",
+      version: 2,
+      partialize: (state) => ({
+        user: state.user,
+      }),
+      merge: (persisted: any, current) => ({
+        ...current,
+        user: persisted?.user ?? current.user,
+      }),
     }
   )
 );

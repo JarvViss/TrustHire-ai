@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { toast } from "sonner";
 
@@ -16,12 +17,15 @@ import {
   deleteResume,
 } from "@/services/resume.service";
 
+import { RESUME_KEYS } from "@/constants/queryKeys";
+
 import { useResumeStore } from "@/store/resume.store";
 
 export default function HistoryPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  const { data, isLoading, refetch } =
+  const { data, isLoading } =
     useResumeHistory();
 
   const { setAnalysis } = useResumeStore();
@@ -38,13 +42,24 @@ export default function HistoryPage() {
     }
   };
 
+  const invalidateResumeData = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: RESUME_KEYS.history,
+      }),
+      queryClient.invalidateQueries({
+        queryKey: RESUME_KEYS.stats,
+      }),
+    ]);
+  };
+
   const handleDelete = async (id: string) => {
     try {
       await deleteResume(id);
 
       toast.success("Resume Deleted");
 
-      refetch();
+      await invalidateResumeData();
     } catch {
       toast.error("Delete Failed");
     }

@@ -5,6 +5,15 @@ import Interview from "../models/Interview";
 import JobAnalysis from "../models/JobAnalysis";
 import CandidateStatus from "../models/CandidateStatus";
 import { createNotification } from "./notification.service";
+import { ApiError } from "../utils/ApiError";
+
+const VALID_STATUSES = [
+  "PENDING",
+  "SHORTLISTED",
+  "INTERVIEW",
+  "HIRED",
+  "REJECTED",
+];
 
 export async function dashboardStats() {
   const totalCandidates = await User.countDocuments({
@@ -137,7 +146,7 @@ export async function getCandidateProfile(
   );
 
   if (!user) {
-    throw new Error("Candidate not found");
+    throw new ApiError(404, "Candidate not found");
   }
 
   const resume = await Resume.findOne({
@@ -180,10 +189,16 @@ export async function changeCandidateStatus(
   const user =
     await User.findById(candidateId);
 
-  if (!user)
-    throw new Error(
-      "Candidate not found"
+  if (!user) {
+    throw new ApiError(404, "Candidate not found");
+  }
+
+  if (!VALID_STATUSES.includes(status)) {
+    throw new ApiError(
+      400,
+      `Invalid status. Allowed: ${VALID_STATUSES.join(", ")}`
     );
+  }
 
   const record = await CandidateStatus.findOneAndUpdate(
     {
@@ -221,10 +236,9 @@ export async function verifyCandidate(
   const user =
     await User.findById(candidateId);
 
-  if (!user)
-    throw new Error(
-      "Candidate not found"
-    );
+  if (!user) {
+    throw new ApiError(404, "Candidate not found");
+  }
 
   const resume = await Resume.findOne({
     user: candidateId,

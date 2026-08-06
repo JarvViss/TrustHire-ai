@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
 import AuthGuard from "@/components/auth/AuthGuard";
 import Navbar from "@/components/layout/Navbar";
 import { CardSkeleton } from "@/components/common/Skeleton";
+import { useResumeHistory } from "@/hooks/useResumeHistory";
 import {
   BarChart3,
   CheckCircle2,
@@ -17,17 +16,9 @@ export default function ComparePage() {
     string[]
   >([]);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["resumeHistory"],
-    queryFn: async () => {
-      const { data } = await api.get(
-        "/resume/history"
-      );
-      return data.data;
-    },
-  });
+  const { data, isLoading } = useResumeHistory();
 
-  const resumes = data ?? [];
+  const resumes = data?.data ?? [];
 
   const toggle = (id: string) => {
     setSelected((prev) =>

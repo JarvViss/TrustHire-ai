@@ -1,3 +1,32 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+const REQUIRED = ["MONGO_URI", "JWT_SECRET", "GROQ_API_KEY"];
+
+for (const key of REQUIRED) {
+  if (!process.env[key]) {
+    console.warn(`⚠️  Missing ${key} in environment`);
+  }
+}
+
+const WEAK_SECRETS = [
+  "trusthire_super_secret_key",
+  "secret",
+  "password",
+  "changeme",
+];
+
+if (
+  process.env.JWT_SECRET &&
+  WEAK_SECRETS.includes(process.env.JWT_SECRET.toLowerCase())
+) {
+  console.warn(
+    "⚠️  JWT_SECRET is weak. Set a long random value (e.g. openssl rand -hex 64)."
+  );
+}
+
+if (process.env.MONGO_URI?.includes("<password>")) {
+  console.warn(
+    "⚠️  MONGO_URI still contains the placeholder <password>. MongoDB connections will fail."
+  );
+}

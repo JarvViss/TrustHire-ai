@@ -10,8 +10,8 @@ export default function ResumeHistory() {
 
   if (isLoading) {
     return (
-      <div className="rounded-2xl border bg-white p-6 shadow">
-        Loading history...
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow dark:border-slate-700 dark:bg-slate-900">
+        <p className="dark:text-white">Loading history...</p>
       </div>
     );
   }
@@ -20,15 +20,15 @@ export default function ResumeHistory() {
 
   if (!resumes.length) {
     return (
-      <div className="rounded-2xl border bg-white p-6 shadow">
-        No previous resumes.
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow dark:border-slate-700 dark:bg-slate-900">
+        <p className="dark:text-white">No previous resumes.</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border bg-white p-6 shadow">
-      <h2 className="mb-6 text-2xl font-bold">
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow dark:border-slate-700 dark:bg-slate-900">
+      <h2 className="mb-6 text-2xl font-bold dark:text-white">
         Previous Analyses
       </h2>
 
@@ -36,14 +36,14 @@ export default function ResumeHistory() {
         {resumes.map((resume: any) => (
           <div
             key={resume._id}
-            className="flex items-center justify-between rounded-xl border p-5 transition hover:border-blue-500 hover:shadow-md"
+            className="flex items-center justify-between rounded-xl border border-slate-200 p-5 transition hover:border-blue-500 hover:shadow-md dark:border-slate-700 dark:hover:border-blue-500"
           >
             <div>
-              <h3 className="font-bold">
+              <h3 className="font-bold dark:text-white">
                 {resume.filename}
               </h3>
 
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 {new Date(
                   resume.createdAt
                 ).toLocaleDateString()}
@@ -51,7 +51,7 @@ export default function ResumeHistory() {
             </div>
 
             <div className="flex items-center gap-5">
-              <span className="rounded-full bg-blue-100 px-4 py-2 font-semibold text-blue-700">
+              <span className="rounded-full bg-blue-100 px-4 py-2 font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                 ATS {resume.atsScore}
               </span>
 

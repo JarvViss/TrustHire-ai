@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { Response, NextFunction } from "express";
 import { AuthRequest } from "../middleware/auth.middleware";
 import {
   sendMessage,
@@ -9,7 +9,8 @@ import {
 
 export async function sendMessageHandler(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
   try {
     const { receiverId, content } = req.body;
@@ -31,17 +32,15 @@ export async function sendMessageHandler(
       success: true,
       data: message,
     });
-  } catch (err: any) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+  } catch (err) {
+    next(err);
   }
 }
 
 export async function getConversationHandler(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
   try {
     const messages = await getConversation(
@@ -58,17 +57,15 @@ export async function getConversationHandler(
       success: true,
       data: messages,
     });
-  } catch (err: any) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+  } catch (err) {
+    next(err);
   }
 }
 
 export async function getConversationsHandler(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
   try {
     const conversations = await getConversations(
@@ -79,10 +76,7 @@ export async function getConversationsHandler(
       success: true,
       data: conversations,
     });
-  } catch (err: any) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+  } catch (err) {
+    next(err);
   }
 }

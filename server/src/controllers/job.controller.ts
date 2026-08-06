@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { Response, NextFunction } from "express";
 
 import Resume from "../models/Resume";
 
@@ -12,7 +12,8 @@ import { AuthRequest } from "../middleware/auth.middleware";
 
 export const analyzeJobController = async (
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
     const { jobDescription } = req.body;
@@ -56,19 +57,15 @@ export const analyzeJobController = async (
 
   } catch (error) {
 
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Job Match Analysis Failed",
-    });
+    next(error);
 
   }
 };
 
 export const getLatestAnalysis = async (
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
     const analysis = await getLatestJobAnalysis(
@@ -80,17 +77,14 @@ export const getLatestAnalysis = async (
       data: analysis,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch analysis",
-    });
+    next(error);
   }
 };
 
 export const getJobHistory = async (
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
     const analyses = await getJobAnalysisHistory(
@@ -102,10 +96,6 @@ export const getJobHistory = async (
       data: analyses,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch history",
-    });
+    next(error);
   }
 };

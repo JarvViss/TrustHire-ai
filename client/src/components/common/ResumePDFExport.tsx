@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { escapeHtml } from "@/lib/sanitize";
 
 interface Props {
   resume: any;
@@ -22,7 +23,7 @@ export default function ResumePDFExport({
 <!DOCTYPE html>
 <html>
 <head>
-<title>Resume - ${resume.filename}</title>
+<title>Resume - ${escapeHtml(resume.filename)}</title>
 <style>
   body { font-family: 'Segoe UI', sans-serif; padding: 40px; color: #1a1a1a; }
   h1 { font-size: 24px; margin-bottom: 8px; }
@@ -36,23 +37,23 @@ export default function ResumePDFExport({
 </head>
 <body>
 <h1>Resume Analysis</h1>
-<p class="ats">ATS Score: <span class="score">${resume.atsScore}%</span></p>
+<p class="ats">ATS Score: <span class="score">${escapeHtml(String(resume.atsScore))}%</span></p>
 
 <h2>Summary</h2>
-<p>${resume.summary}</p>
+<p>${escapeHtml(resume.summary)}</p>
 
 <h2>Skills</h2>
-<p>${resume.skills?.map((s: string) => `<span class="skill">${s}</span>`).join(" ")}</p>
+<p>${resume.skills?.map((s: string) => `<span class="skill">${escapeHtml(s)}</span>`).join(" ")}</p>
 
 <h2>Strengths</h2>
-<ul>${resume.strengths?.map((s: string) => `<li>${s}</li>`).join("")}</ul>
+<ul>${resume.strengths?.map((s: string) => `<li>${escapeHtml(s)}</li>`).join("")}</ul>
 
 <h2>Suggestions</h2>
-<ul>${resume.suggestions?.map((s: string) => `<li>${s}</li>`).join("")}</ul>
+<ul>${resume.suggestions?.map((s: string) => `<li>${escapeHtml(s)}</li>`).join("")}</ul>
 
 ${
   resume.missingSkills?.length
-    ? `<h2>Missing Skills</h2><ul>${resume.missingSkills.map((s: string) => `<li>${s}</li>`).join("")}</ul>`
+    ? `<h2>Missing Skills</h2><ul>${resume.missingSkills.map((s: string) => `<li>${escapeHtml(s)}</li>`).join("")}</ul>`
     : ""
 }
 

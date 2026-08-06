@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { Response, NextFunction } from "express";
 import { AuthRequest } from "../middleware/auth.middleware";
 import {
   getNotifications,
@@ -9,7 +9,8 @@ import {
 
 export async function getMyNotifications(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
   try {
     const notifications = await getNotifications(
@@ -24,40 +25,33 @@ export async function getMyNotifications(
       data: notifications,
       unreadCount,
     });
-  } catch {
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch notifications",
-    });
+  } catch (err) {
+    next(err);
   }
 }
 
 export async function markNotificationRead(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
   try {
     await markAsRead(req.userId!, String(req.params.id));
     res.json({ success: true });
-  } catch {
-    res.status(500).json({
-      success: false,
-      message: "Failed",
-    });
+  } catch (err) {
+    next(err);
   }
 }
 
 export async function markAllRead(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
   try {
     await markAllAsRead(req.userId!);
     res.json({ success: true });
-  } catch {
-    res.status(500).json({
-      success: false,
-      message: "Failed",
-    });
+  } catch (err) {
+    next(err);
   }
 }

@@ -12,6 +12,7 @@ import { useResumeStore } from "@/store/resume.store";
 import NotificationBell from "@/components/common/NotificationBell";
 import ThemeToggle from "@/components/common/ThemeToggle";
 import { API_BASE_URL } from "@/lib/utils";
+import api from "@/lib/axios";
 
 const API_BASE = API_BASE_URL;
 
@@ -28,6 +29,7 @@ export default function Navbar() {
   const handleLogout = () => {
     logout();
     clear();
+    api.post("/auth/logout").catch(() => {});
     router.push("/login");
     setMobileOpen(false);
   };

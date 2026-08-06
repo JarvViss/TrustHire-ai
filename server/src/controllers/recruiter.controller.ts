@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { Response, NextFunction } from "express";
 import { AuthRequest } from "../middleware/auth.middleware";
 
 import {
@@ -11,7 +11,8 @@ import {
 
 export async function getDashboardStats(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
   try {
     const stats = await dashboardStats();
@@ -20,16 +21,15 @@ export async function getDashboardStats(
       success: true,
       stats,
     });
-  } catch {
-    res.status(500).json({
-      success: false,
-    });
+  } catch (err) {
+    next(err);
   }
 }
 
 export async function getCandidates(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
   try {
     const candidates = await candidateList();
@@ -38,16 +38,15 @@ export async function getCandidates(
       success: true,
       candidates,
     });
-  } catch {
-    res.status(500).json({
-      success: false,
-    });
+  } catch (err) {
+    next(err);
   }
 }
 
 export async function getCandidateById(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
   try {
     const candidate = await getCandidateProfile(
@@ -58,19 +57,25 @@ export async function getCandidateById(
       success: true,
       candidate,
     });
-  } catch {
-    res.status(404).json({
-      success: false,
-    });
+  } catch (err) {
+    next(err);
   }
 }
 
 export async function updateCandidateStatus(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
   try {
     const { status, notes } = req.body;
+
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: "Status is required",
+      });
+    }
 
     const candidate = await changeCandidateStatus(
       String(req.params.id),
@@ -83,17 +88,15 @@ export async function updateCandidateStatus(
       success: true,
       candidate,
     });
-  } catch (err: any) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+  } catch (err) {
+    next(err);
   }
 }
 
 export async function verifyCandidateBlockchain(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) {
   try {
     const candidate = await verifyCandidate(
@@ -104,10 +107,7 @@ export async function verifyCandidateBlockchain(
       success: true,
       candidate,
     });
-  } catch (err: any) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+  } catch (err) {
+    next(err);
   }
 }

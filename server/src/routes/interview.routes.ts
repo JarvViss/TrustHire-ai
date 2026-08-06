@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import { protect } from "../middleware/auth.middleware";
+import { aiRateLimit } from "../middleware/rateLimiter";
 
 import {
   createInterview,
@@ -13,9 +14,9 @@ const router = Router();
 
 router.use(protect);
 
-router.post("/start", createInterview);
+router.post("/start", aiRateLimit, createInterview);
 
-router.post("/answer", answerInterview);
+router.post("/answer", aiRateLimit, answerInterview);
 
 router.get("/history", getInterviewHistory);
 
