@@ -1,23 +1,30 @@
-import fs from "fs";
 import Resume from "../models/Resume";
 import { extractTextFromPDF } from "./pdf.service";
 import { analyzeResume } from "./ai.service";
+import { deleteFile, storeFile } from "./storage.service";
 
 export const processResume = async (
   userId: string,
   file: Express.Multer.File
 ) => {
+  const extractedText =
+    await extractTextFromPDF(file.buffer);
+
+  const analysis =
+    await analyzeResume(extractedText);
+
+  const fileUrl = await storeFile(
+    file.buffer,
+    "resumes",
+    "raw",
+    file.originalname
+  );
+
   try {
-    const extractedText =
-      await extractTextFromPDF(file.path);
-
-    const analysis =
-      await analyzeResume(extractedText);
-
     return await Resume.create({
       user: userId,
       filename: file.originalname,
-      fileUrl: `/uploads/resumes/${file.filename}`,
+      fileUrl,
       atsScore: analysis.atsScore,
       summary: analysis.summary,
       skills: analysis.skills,
@@ -26,7 +33,7 @@ export const processResume = async (
       suggestions: analysis.suggestions,
     });
   } catch (error) {
-    fs.rm(file.path, { force: true }, () => {});
+    await deleteFile(fileUrl);
     throw error;
   }
 };
@@ -34,13 +41,7 @@ export const processResume = async (
 export const deleteResumeFile = async (
   fileUrl: string
 ) => {
-  const basename = fileUrl.split("/").pop();
-
-  if (!basename) return;
-
-  const filePath = `uploads/resumes/${basename}`;
-
-  fs.rm(filePath, { force: true }, () => {});
+  await deleteFile(fileUrl);
 };
 
 export const getUserResumes = async (

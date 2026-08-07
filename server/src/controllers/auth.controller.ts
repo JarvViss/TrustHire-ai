@@ -46,12 +46,10 @@ export const register = async (
       userRole as UserRole
     );
 
-    setAuthCookie(res, data.token);
-
     res.status(201).json({
       success: true,
-      message: "User registered successfully",
-      data,
+      message: data.message,
+      data: data.user,
     });
   } catch (error) {
     next(error);
@@ -97,4 +95,61 @@ export const logout = async (
     success: true,
     message: "Logged out",
   });
+};
+
+export const verifyEmail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and code are required",
+      });
+    }
+
+    const result = await authService.verifyEmail(
+      email,
+      String(code).trim()
+    );
+
+    res.json({
+      success: true,
+      message: result.message,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const resendVerificationCode = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const result = await authService.resendVerificationCode(
+      email
+    );
+
+    res.json({
+      success: true,
+      message: result.message,
+    });
+  } catch (err) {
+    next(err);
+  }
 };

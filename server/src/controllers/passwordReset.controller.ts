@@ -23,7 +23,7 @@ export const forgotPassword = async (
 
     res.json({
       success: true,
-      ...result,
+      message: result.message,
     });
   } catch (err) {
     next(err);
@@ -36,12 +36,12 @@ export const resetPasswordHandler = async (
   next: NextFunction
 ) => {
   try {
-    const { token, password } = req.body;
+    const { email, code, password } = req.body;
 
-    if (!token || !password) {
+    if (!email || !code || !password) {
       return res.status(400).json({
         success: false,
-        message: "Token and password are required",
+        message: "Email, code, and password are required",
       });
     }
 
@@ -53,11 +53,15 @@ export const resetPasswordHandler = async (
       });
     }
 
-    const result = await resetPassword(token, password);
+    const result = await resetPassword(
+      email,
+      code,
+      password
+    );
 
     res.json({
       success: true,
-      ...result,
+      message: result.message,
     });
   } catch (err) {
     next(err);

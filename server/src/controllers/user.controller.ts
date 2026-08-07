@@ -1,6 +1,7 @@
 import { Response, NextFunction } from "express";
 import User from "../models/User";
 import { AuthRequest } from "../middleware/auth.middleware";
+import { deleteFile, storeFile } from "../services/storage.service";
 
 const ALLOWED_PROFILE_FIELDS = [
   "name",
@@ -87,13 +88,28 @@ export const uploadImage = async (
     const field =
       type === "cover" ? "coverImage" : "profileImage";
 
-    const imageUrl = `/uploads/images/${req.file.filename}`;
+    const current = await User.findById(req.userId);
+    const previousUrl =
+      field === "coverImage"
+        ? current?.coverImage
+        : current?.profileImage;
+
+    const imageUrl = await storeFile(
+      req.file.buffer,
+      "images",
+      "image",
+      req.file.originalname
+    );
 
     const updated = await User.findByIdAndUpdate(
       req.userId,
       { $set: { [field]: imageUrl } },
       { new: true }
     ).select("-password");
+
+    if (previousUrl && previousUrl !== imageUrl) {
+      await deleteFile(previousUrl);
+    }
 
     res.json({
       success: true,

@@ -32,6 +32,10 @@ export interface IUser extends Document {
 
   isVerified: boolean;
 
+  verificationCode: string;
+
+  verificationCodeExpiry: Date;
+
   resetToken: string;
 
   resetTokenExpiry: Date;
@@ -128,6 +132,16 @@ default:""
 isVerified:{
 type:Boolean,
 default:false
+},
+
+verificationCode:{
+type:String,
+default:""
+},
+
+verificationCodeExpiry:{
+type:Date,
+default:null
 },
 
 resetToken:{

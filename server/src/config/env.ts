@@ -39,3 +39,9 @@ if (
     "⚠️  CONTRACT_ADDRESS / VERIFIER_PRIVATE_KEY not set — candidate verification will NOT be written on-chain (MongoDB fallback only)."
   );
 }
+
+if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  console.warn(
+    "⚠️  SMTP not configured — verification/reset codes will be logged to the console instead of emailed. Set SMTP_HOST/SMTP_USER/SMTP_PASS in .env."
+  );
+}
