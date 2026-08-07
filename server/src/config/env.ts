@@ -30,3 +30,12 @@ if (process.env.MONGO_URI?.includes("<password>")) {
     "⚠️  MONGO_URI still contains the placeholder <password>. MongoDB connections will fail."
   );
 }
+
+if (
+  !process.env.CONTRACT_ADDRESS ||
+  !process.env.VERIFIER_PRIVATE_KEY
+) {
+  console.warn(
+    "⚠️  CONTRACT_ADDRESS / VERIFIER_PRIVATE_KEY not set — candidate verification will NOT be written on-chain (MongoDB fallback only)."
+  );
+}

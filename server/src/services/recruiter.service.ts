@@ -6,6 +6,10 @@ import JobAnalysis from "../models/JobAnalysis";
 import CandidateStatus from "../models/CandidateStatus";
 import { createNotification } from "./notification.service";
 import { ApiError } from "../utils/ApiError";
+import {
+  isBlockchainConfigured,
+  verifyCertificateOnChain,
+} from "./verification.service";
 
 const VALID_STATUSES = [
   "PENDING",
@@ -249,12 +253,16 @@ export async function verifyCandidate(
     status: "COMPLETED",
   }).sort({ createdAt: -1 });
 
+  const interviewScore = Math.round(
+    interview?.result?.overall ?? 0
+  );
+
   const verificationData = JSON.stringify({
     userId: candidateId,
     name: user.name,
     email: user.email,
     resumeHash: resume?._id?.toString() || "",
-    interviewScore: interview?.result?.overall || 0,
+    interviewScore,
     timestamp: Date.now().toString(),
   });
 
@@ -265,8 +273,24 @@ export async function verifyCandidate(
       .update(verificationData)
       .digest("hex");
 
+  let verificationTxHash = "";
+
+  if (isBlockchainConfigured()) {
+    verificationTxHash = await verifyCertificateOnChain(
+      verificationHash,
+      user.name,
+      resume?._id?.toString() ?? "",
+      interviewScore
+    );
+  } else {
+    console.warn(
+      "⚠️  Blockchain not configured (CONTRACT_ADDRESS / VERIFIER_PRIVATE_KEY) — storing verification hash in MongoDB only."
+    );
+  }
+
   user.isVerified = true;
   user.verificationHash = verificationHash;
+  user.verificationTxHash = verificationTxHash;
 
   await user.save();
 

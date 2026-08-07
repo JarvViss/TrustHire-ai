@@ -14,7 +14,6 @@ import { getLatestJobAnalysis } from "@/services/job.service";
 
 export default function JobResultPage() {
   const { result, setResult } = useJobStore();
-  const [ready, setReady] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["latestJobAnalysis"],
@@ -23,18 +22,14 @@ export default function JobResultPage() {
   });
 
   useEffect(() => {
-    if (result) {
-      setReady(true);
-      return;
-    }
-
-    if (data?.data) {
+    if (!result && data?.data) {
       setResult(data.data);
-      setReady(true);
     }
   }, [data, result, setResult]);
 
-  if (isLoading || !ready) {
+  const current = result ?? data?.data ?? null;
+
+  if (isLoading && !current) {
     return (
       <AuthGuard>
         <Navbar />
@@ -45,7 +40,7 @@ export default function JobResultPage() {
     );
   }
 
-  if (!result) {
+  if (!current) {
     return (
       <AuthGuard>
         <Navbar />
@@ -65,17 +60,17 @@ export default function JobResultPage() {
           AI Job Match Result
         </h1>
 
-        <JobMatchCard score={result.matchScore} />
+        <JobMatchCard score={current.matchScore} />
 
         <MissingSkillsCard
-          skills={result.missingSkills}
+          skills={current.missingSkills}
         />
 
         <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow dark:border-slate-700 dark:bg-slate-900">
           <h2 className="mb-4 text-2xl font-bold dark:text-white">
             Recommendation
           </h2>
-          <p className="dark:text-slate-200">{result.recommendation}</p>
+          <p className="dark:text-slate-200">{current.recommendation}</p>
         </div>
 
         <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow dark:border-slate-700 dark:bg-slate-900">
@@ -83,7 +78,7 @@ export default function JobResultPage() {
             Interview Readiness
           </h2>
           <div className="text-7xl font-black text-green-600 dark:text-green-400">
-            {result.interviewReadiness}/10
+            {current.interviewReadiness}/10
           </div>
         </div>
       </main>

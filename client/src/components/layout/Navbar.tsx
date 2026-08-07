@@ -11,7 +11,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { useResumeStore } from "@/store/resume.store";
 import NotificationBell from "@/components/common/NotificationBell";
 import ThemeToggle from "@/components/common/ThemeToggle";
-import { API_BASE_URL } from "@/lib/utils";
+import { API_BASE_URL, avatarFallback } from "@/lib/utils";
 import api from "@/lib/axios";
 
 const API_BASE = API_BASE_URL;
@@ -51,6 +51,10 @@ export default function Navbar() {
     {
       href: "/applications",
       label: "Applications",
+    },
+    {
+      href: "/my-interviews",
+      label: "My Interviews",
     },
     { href: "/interview", label: "Mock Interview" },
     {
@@ -120,6 +124,13 @@ export default function Navbar() {
               <img
                 src={`${API_BASE}${profileImage}`}
                 alt="Profile"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.dataset.fallback) {
+                    target.dataset.fallback = "1";
+                    target.src = avatarFallback(user?.name);
+                  }
+                }}
                 className="h-8 w-8 rounded-full border border-slate-200 object-cover dark:border-slate-700"
               />
             ) : (
@@ -149,6 +160,13 @@ export default function Navbar() {
               <img
                 src={`${API_BASE}${profileImage}`}
                 alt="Profile"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.dataset.fallback) {
+                    target.dataset.fallback = "1";
+                    target.src = avatarFallback(user?.name);
+                  }
+                }}
                 className="h-8 w-8 rounded-full border border-slate-200 object-cover dark:border-slate-700"
               />
             ) : (

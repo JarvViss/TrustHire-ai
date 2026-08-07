@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Mail,
   Download,
@@ -11,7 +12,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/axios";
-import { API_BASE_URL } from "@/lib/utils";
+import { API_BASE_URL, avatarFallback } from "@/lib/utils";
 import { escapeHtml } from "@/lib/sanitize";
 
 const API_BASE = API_BASE_URL;
@@ -86,12 +87,11 @@ ${resume.missingSkills?.length ? `<h2>Missing Skills</h2><ul>${resume.missingSki
     toast.error("No resume available to download");
   };
 
-  const profileSrc =
-    user?.profileImage
-      ? `${API_BASE}${user.profileImage}`
-      : `https://ui-avatars.com/api/?background=2563eb&color=fff&name=${encodeURIComponent(
-          user?.name || "User"
-        )}`;
+  const [coverBroken, setCoverBroken] = useState(false);
+
+  const profileSrc = user?.profileImage
+    ? `${API_BASE}${user.profileImage}`
+    : avatarFallback(user?.name);
 
   const links = [
     {
@@ -116,7 +116,7 @@ ${resume.missingSkills?.length ? `<h2>Missing Skills</h2><ul>${resume.missingSki
       <div
         className="h-40"
         style={
-          user?.coverImage
+          user?.coverImage && !coverBroken
             ? {
                 backgroundImage: `url(${API_BASE}${user.coverImage})`,
                 backgroundSize: "cover",
@@ -125,8 +125,16 @@ ${resume.missingSkills?.length ? `<h2>Missing Skills</h2><ul>${resume.missingSki
             : undefined
         }
       >
-        {!user?.coverImage && (
+        {(!user?.coverImage || coverBroken) && (
           <div className="h-full bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500" />
+        )}
+        {user?.coverImage && (
+          <img
+            src={`${API_BASE}${user.coverImage}`}
+            alt=""
+            className="hidden"
+            onError={() => setCoverBroken(true)}
+          />
         )}
       </div>
 
@@ -135,6 +143,13 @@ ${resume.missingSkills?.length ? `<h2>Missing Skills</h2><ul>${resume.missingSki
           <div className="flex gap-6">
             <img
               src={profileSrc}
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (!target.dataset.fallback) {
+                  target.dataset.fallback = "1";
+                  target.src = avatarFallback(user?.name);
+                }
+              }}
               className="h-32 w-32 rounded-full border-4 border-white object-cover shadow-lg dark:border-slate-900"
             />
             <div className="pt-16">

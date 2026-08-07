@@ -12,6 +12,7 @@ import notificationRoutes from "./notification.routes";
 import messageRoutes from "./message.routes";
 import applicationRoutes from "./application.routes";
 import interviewScheduleRoutes from "./interviewSchedule.routes";
+import verificationRoutes from "./verification.routes";
 
 const router = Router();
 
@@ -38,5 +39,7 @@ router.use("/applications", applicationRoutes);
 router.use("/schedule", interviewScheduleRoutes);
 
 router.use("/auth", passwordResetRoutes);
+
+router.use("/verification", verificationRoutes);
 
 export default router;

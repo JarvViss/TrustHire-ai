@@ -57,9 +57,18 @@ export default function UploadBox() {
       toast.success("Resume analyzed successfully!");
 
       router.push("/dashboard");
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error("Upload failed");
+
+      if (!err?.response) {
+        toast.error(
+          "Cannot reach the API server. Make sure the backend is running on http://localhost:5000 and try again."
+        );
+      } else {
+        toast.error(
+          err?.response?.data?.message || "Upload failed"
+        );
+      }
     }
   };
 

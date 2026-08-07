@@ -82,16 +82,23 @@ export const getResumeStats = async (
 
   if (atsAgg.length > 0) {
     const scores: number[] = atsAgg[0].allScores;
-    const below = scores.filter(
-      (s) => s < yourScore
-    ).length;
-    const denominator = Math.max(
-      1,
-      scores.length - 1
-    );
-    percentile = Math.round(
-      (below / denominator) * 100
-    );
+    const total = scores.length - 1;
+
+    if (total <= 0) {
+      percentile = 100;
+    } else {
+      const below = scores.filter(
+        (s) => s < yourScore
+      ).length;
+      const equal = Math.max(
+        0,
+        scores.filter((s) => s === yourScore)
+          .length - 1
+      );
+      percentile = Math.round(
+        ((below + equal * 0.5) / total) * 100
+      );
+    }
   }
 
   const skillsAgg = await Resume.aggregate([

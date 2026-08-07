@@ -6,6 +6,10 @@ import {
   getCandidateSchedule,
   getRecruiterSchedule,
   cancelSchedule,
+  generateQuestionsForSchedule,
+  saveAnswerForSchedule,
+  completeScheduleInterview,
+  updateMeetingLink,
 } from "../services/interviewSchedule.service";
 
 export async function createSchedule(
@@ -20,6 +24,8 @@ export async function createSchedule(
       duration,
       type,
       notes,
+      role,
+      meetingLink,
     } = req.body;
 
     if (!candidateId || !scheduledAt) {
@@ -36,7 +42,9 @@ export async function createSchedule(
       new Date(scheduledAt),
       duration ?? 30,
       type ?? "ONLINE",
-      notes ?? ""
+      notes ?? "",
+      role ?? "",
+      meetingLink ?? ""
     );
 
     res.status(201).json({
@@ -102,6 +110,94 @@ export async function cancelInterview(
         message: "Schedule not found",
       });
     }
+
+    res.json({
+      success: true,
+      data: schedule,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function generateQuestions(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const schedule = await generateQuestionsForSchedule(
+      String(req.params.id),
+      req.userId!,
+      req.body?.role ?? ""
+    );
+
+    res.json({
+      success: true,
+      data: schedule,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function saveAnswer(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const schedule = await saveAnswerForSchedule(
+      String(req.params.id),
+      req.userId!,
+      {
+        questionIndex: req.body?.questionIndex,
+        answer: req.body?.answer ?? "",
+        rating: req.body?.rating,
+        notes: req.body?.notes ?? "",
+      }
+    );
+
+    res.json({
+      success: true,
+      data: schedule,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function completeInterview(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const schedule = await completeScheduleInterview(
+      String(req.params.id),
+      req.userId!
+    );
+
+    res.json({
+      success: true,
+      data: schedule,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function setMeetingLink(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const schedule = await updateMeetingLink(
+      String(req.params.id),
+      req.userId!,
+      req.body?.meetingLink ?? ""
+    );
 
     res.json({
       success: true,

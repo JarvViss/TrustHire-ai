@@ -9,7 +9,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { API_BASE_URL } from "@/lib/utils";
+import { API_BASE_URL, avatarFallback } from "@/lib/utils";
 
 interface Props {
   candidates: any[];
@@ -162,8 +162,15 @@ export default function CandidateList({
                     src={
                       candidate.profileImage
                         ? `${API_BASE_URL}${candidate.profileImage}`
-                        : `https://ui-avatars.com/api/?background=2563eb&color=fff&name=${encodeURIComponent(candidate.name || "User")}`
+                        : avatarFallback(candidate.name)
                     }
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (!target.dataset.fallback) {
+                        target.dataset.fallback = "1";
+                        target.src = avatarFallback(candidate.name);
+                      }
+                    }}
                     className="h-20 w-20 rounded-full object-cover"
                   />
 

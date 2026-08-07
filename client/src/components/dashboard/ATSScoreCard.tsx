@@ -1,6 +1,7 @@
 "use client";
 
 import DashboardCard from "./DashboardCard";
+import { useTheme } from "@/components/common/ThemeProvider";
 
 import {
   CircularProgressbar,
@@ -16,20 +17,24 @@ interface Props {
 export default function ATSScoreCard({
   score,
 }: Props) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
+  const displayScore = Math.round(score);
 
   const getColor = () => {
-    if (score >= 85) return "#22c55e";
+    if (displayScore >= 85) return "#22c55e";
 
-    if (score >= 70) return "#f59e0b";
+    if (displayScore >= 70) return "#f59e0b";
 
     return "#ef4444";
   };
 
   const getMessage = () => {
-    if (score >= 85)
+    if (displayScore >= 85)
       return "Excellent Resume";
 
-    if (score >= 70)
+    if (displayScore >= 70)
       return "Good Resume";
 
     return "Needs Improvement";
@@ -43,13 +48,13 @@ export default function ATSScoreCard({
         <div className="h-56 w-56">
 
           <CircularProgressbar
-            value={score}
-            text={`${score}%`}
+            value={displayScore}
+            text={`${displayScore}%`}
             styles={buildStyles({
               textSize: "16px",
               pathColor: getColor(),
-              textColor: "#111827",
-              trailColor: "#E5E7EB",
+              textColor: isDark ? "#f8fafc" : "#111827",
+              trailColor: isDark ? "#1e293b" : "#E5E7EB",
             })}
           />
 

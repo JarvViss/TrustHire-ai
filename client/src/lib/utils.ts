@@ -10,3 +10,7 @@ const rawApiUrl =
   "http://localhost:5000/api";
 
 export const API_BASE_URL = rawApiUrl.replace(/\/api\/?$/, "");
+
+export function avatarFallback(name?: string | null) {
+  return `https://ui-avatars.com/api/?background=2563eb&color=fff&name=${encodeURIComponent(name || "User")}`;
+}

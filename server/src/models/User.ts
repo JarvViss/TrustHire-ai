@@ -26,6 +26,8 @@ export interface IUser extends Document {
 
   verificationHash: string;
 
+  verificationTxHash: string;
+
   location: string;
 
   isVerified: boolean;
@@ -107,6 +109,11 @@ default:""
 
 
 verificationHash: {
+    type: String,
+    default: "",
+},
+
+verificationTxHash: {
     type: String,
     default: "",
 },

@@ -108,7 +108,7 @@ export default function SkillsChart({
               tick={{
                 fontSize: 12,
                 fontWeight: 500,
-                fill: "#e2e8f0",
+                fill: "#64748b",
               }}
               axisLine={false}
               tickLine={false}

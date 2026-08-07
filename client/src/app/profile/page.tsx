@@ -22,7 +22,7 @@ import {
   useUploadImage,
 } from "@/hooks/useProfile";
 import { useAuthStore } from "@/store/auth.store";
-import { API_BASE_URL } from "@/lib/utils";
+import { API_BASE_URL, avatarFallback } from "@/lib/utils";
 
 const API_BASE = API_BASE_URL;
 
@@ -124,7 +124,10 @@ export default function ProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await updateProfile.mutateAsync(form);
+      const res = await updateProfile.mutateAsync(form);
+      if (res?.data) {
+        syncProfile(res.data);
+      }
       toast.success("Profile updated successfully");
     } catch {
       toast.error("Failed to update profile");
@@ -169,6 +172,14 @@ export default function ProfilePage() {
               }
               onClick={() => coverInput.current?.click()}
             >
+              {coverPreview.startsWith("http") && (
+                <img
+                  src={coverPreview}
+                  alt=""
+                  className="hidden"
+                  onError={() => setCoverPreview("")}
+                />
+              )}
               <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/30">
                 <div className="flex items-center gap-2 rounded-xl bg-black/50 px-4 py-2 text-sm font-semibold text-white opacity-0 transition group-hover:opacity-100">
                   <Camera size={16} />
@@ -195,6 +206,13 @@ export default function ProfilePage() {
                   <img
                     src={profilePreview}
                     alt="Profile"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (!target.dataset.fallback) {
+                        target.dataset.fallback = "1";
+                        setProfilePreview(avatarFallback(user?.name));
+                      }
+                    }}
                     className="h-full w-full object-cover"
                   />
                 ) : (

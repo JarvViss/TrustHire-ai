@@ -1,0 +1,49 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_28-36c815b1dfb0863a68866a4916d5e98f4c66e714",
+  "solcVersion": "0.8.28",
+  "solcLongVersion": "0.8.28+commit.7893614a",
+  "compilerType": "solc",
+  "toolVersions": {
+    "hardhat": "3.10.0"
+  },
+  "userSourceNameMap": {
+    "contracts/CertificateVerification.sol": "project/contracts/CertificateVerification.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "cancun",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode.linkReferences",
+            "evm.bytecode.object",
+            "evm.bytecode.opcodes",
+            "evm.bytecode.sourceMap",
+            "evm.deployedBytecode.immutableReferences",
+            "evm.deployedBytecode.linkReferences",
+            "evm.deployedBytecode.object",
+            "evm.deployedBytecode.opcodes",
+            "evm.deployedBytecode.sourceMap",
+            "evm.methodIdentifiers"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/CertificateVerification.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.28;\n\ncontract CertificateVerification {\n    address public owner;\n\n    struct Certificate {\n        bytes32 hash;\n        string candidateName;\n        string resumeId;\n        uint8 interviewScore;\n        uint256 timestamp;\n    }\n\n    mapping(bytes32 => Certificate) private _certificates;\n    mapping(bytes32 => bool) private _verified;\n\n    event CertificateVerified(bytes32 indexed hash, address indexed by, uint256 timestamp);\n    event CertificateRevoked(bytes32 indexed hash);\n\n    modifier onlyOwner() {\n        require(msg.sender == owner, \"Not the contract owner\");\n        _;\n    }\n\n    constructor() {\n        owner = msg.sender;\n    }\n\n    // Called by the server's wallet (the owner). Public writes are rejected.\n    function verifyCertificate(\n        bytes32 hash,\n        string calldata candidateName,\n        string calldata resumeId,\n        uint8 interviewScore\n    ) external onlyOwner {\n        require(hash != bytes32(0), \"Invalid hash\");\n        require(!_verified[hash], \"Certificate already exists\");\n\n        _certificates[hash] = Certificate({\n            hash: hash,\n            candidateName: candidateName,\n            resumeId: resumeId,\n            interviewScore: interviewScore,\n            timestamp: block.timestamp\n        });\n        _verified[hash] = true;\n\n        emit CertificateVerified(hash, msg.sender, block.timestamp);\n    }\n\n    // Read-only, free for anyone to call\n    function checkCertificate(bytes32 hash) external view returns (bool) {\n        return _verified[hash];\n    }\n\n    function getCertificate(bytes32 hash)\n        external\n        view\n        returns (\n            bytes32 certHash,\n            string memory candidateName,\n            string memory resumeId,\n            uint8 interviewScore,\n            uint256 timestamp\n        )\n    {\n        Certificate storage cert = _certificates[hash];\n        certHash = cert.hash;\n        candidateName = cert.candidateName;\n        resumeId = cert.resumeId;\n        interviewScore = cert.interviewScore;\n        timestamp = cert.timestamp;\n    }\n\n    function revokeCertificate(bytes32 hash) external onlyOwner {\n        require(_verified[hash], \"Certificate not found\");\n        delete _certificates[hash];\n        _verified[hash] = false;\n        emit CertificateRevoked(hash);\n    }\n}\n"
+      }
+    }
+  }
+}

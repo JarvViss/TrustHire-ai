@@ -24,6 +24,8 @@ const NotificationSchema = new mongoose.Schema(
       enum: [
         "STATUS_UPDATE",
         "NEW_CANDIDATE",
+        "INTERVIEW_SCHEDULED",
+        "INTERVIEW_CANCELLED",
         "INTERVIEW_COMPLETE",
         "RESUME_UPLOADED",
         "VERIFICATION",

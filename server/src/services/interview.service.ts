@@ -11,26 +11,43 @@ const client = new OpenAI({
   timeout: 30000,
 });
 
+const MODEL = "openai/gpt-oss-120b";
+
 function safeParseJSON(text: string): any {
   const cleaned = text
     .replace(/```json/g, "")
     .replace(/```/g, "")
     .trim();
 
+  if (!cleaned) {
+    return {};
+  }
+
+  let parsed: any;
+
   try {
-    return JSON.parse(cleaned);
+    parsed = JSON.parse(cleaned);
   } catch {
     const start = cleaned.indexOf("{");
     const end = cleaned.lastIndexOf("}");
 
     if (start !== -1 && end !== -1 && end > start) {
-      return JSON.parse(cleaned.slice(start, end + 1));
+      parsed = JSON.parse(cleaned.slice(start, end + 1));
+    } else {
+      return {};
     }
-
-    throw new Error(
-      "Failed to parse AI response as JSON"
-    );
   }
+
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return {};
+  }
+
+  return parsed;
+}
+
+function asStringArray(value: any): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item) => typeof item === "string");
 }
 
 function clampScore(value: any, fallback = 0): number {
@@ -72,6 +89,68 @@ ${item.answer}
     .join("\n");
 }
 
+function normalizeQuestion(value: unknown): string {
+  if (typeof value !== "string") return "";
+  return value.trim().replace(/\s+/g, " ");
+}
+
+function isDuplicateQuestion(
+  question: string,
+  conversation: any[]
+): boolean {
+  const next = normalizeQuestion(question).toLowerCase();
+
+  if (!next) return true;
+
+  return conversation.some(
+    (item) =>
+      item.question?.trim().toLowerCase() === next
+  );
+}
+
+function buildFallbackQuestions(
+  role: string,
+  skills: string[]
+): string[] {
+  const primarySkill = skills[0] ?? "your core tech stack";
+  const safeRole = role.trim() || "software engineer";
+
+  return [
+    `For the ${safeRole} role, walk me through how you would debug a production issue that only shows up intermittently.`,
+    `How do you keep the code you write for ${primarySkill} maintainable and easy for other developers to work on?`,
+    `Walk me through your approach to designing a new feature end-to-end for a ${safeRole} project.`,
+    `How would you test the most critical behavior in a ${safeRole} system, and what would you focus on first?`,
+    `Describe a time you improved performance or reliability in a ${safeRole} codebase. How did you measure the result?`,
+    `How do you decide which ${primarySkill} best practices to apply when building something for a ${safeRole} role?`,
+    `What security or data-integrity concerns do you think about when building a ${safeRole} application?`,
+    `How would you refactor a piece of legacy code in a ${safeRole} project without breaking existing behavior?`,
+    `Explain how you would design an API used by a ${safeRole} app, including error handling and performance.`,
+    `How do you handle a situation where a teammate disagrees with your technical approach for a ${safeRole} feature?`,
+  ];
+}
+
+function pickFallbackQuestion(
+  conversation: any[],
+  role: string,
+  skills: string[]
+): string {
+  const asked = new Set(
+    conversation.map((item) =>
+      item.question?.trim().toLowerCase()
+    )
+  );
+
+  const unused = buildFallbackQuestions(
+    role,
+    skills
+  ).find((q) => !asked.has(q.toLowerCase()));
+
+  return (
+    unused ??
+    `For the ${role} role, describe the technical problem you are most proud of solving and the approach you used.`
+  );
+}
+
 export async function startInterview(
   userId: string,
   role: string
@@ -111,13 +190,15 @@ Rules:
 
 • Ask ONE technical interview question.
 
-• The question MUST be related to the candidate's resume.
+• The question MUST be directly about a specific technology or skill from the candidate's resume that is relevant to the Candidate Role.
 
 • Start with an EASY question.
 
 • Do NOT ask HR questions.
 
 • Do NOT ask "Tell me about yourself."
+
+• Do NOT ask generic behavioral or opinion questions.
 
 • Ask something that evaluates technical understanding.
 
@@ -134,8 +215,9 @@ Return ONLY JSON.
 
   const completion =
     await client.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      temperature: 0.2,
+      model: MODEL,
+      temperature: 0.5,
+      response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
@@ -154,6 +236,8 @@ Return ONLY JSON.
 
   const parsed = safeParseJSON(content);
 
+  const firstQuestion = normalizeQuestion(parsed.question);
+
   return await Interview.create({
     user: userId,
     role,
@@ -161,7 +245,9 @@ Return ONLY JSON.
     currentQuestion: 0,
     conversation: [
       {
-        question: parsed.question,
+        question:
+          firstQuestion ||
+          pickFallbackQuestion([], role, resume.skills),
         answer: "",
         score: 0,
         feedback: "",
@@ -241,6 +327,10 @@ export async function submitAnswer(
   if (!lastQuestion) {
     const difficulty = getDifficulty(current + 1);
 
+    const askedQuestions = interview.conversation
+      .map((item, index) => `${index + 1}. ${item.question}`)
+      .join("\n");
+
     const prompt = `
 You are a Senior Staff Software Engineer and Hiring Manager at Google.
 
@@ -258,17 +348,17 @@ Candidate Skills:
 
 ${resume.skills.join(", ")}
 
-Interview Conversation:
+Interview Conversation (score the LATEST answer, the last question-answer pair):
 
 ${history}
-
-The latest answer to evaluate is:
-
-"${answer}"
 
 The NEXT question difficulty should be:
 
 ${difficulty}
+
+Already Asked Questions (Do NOT ask any of these again):
+
+${askedQuestions}
 
 ==========================
 Evaluation Rules
@@ -314,8 +404,11 @@ Feedback Rules:
 
 Question Rules:
 
-- Do NOT repeat previous questions.
-- Ask about technologies in the resume.
+- Ask ONE NEW question that is different from ALL the already asked questions above.
+- Do NOT repeat, rephrase, or echo any previous question.
+- Do NOT repeat the candidate's own words.
+- ONLY ask about technologies that are relevant to the Candidate Role and present in the resume skills.
+- Do NOT ask generic or unrelated topics.
 - Increase difficulty gradually.
 - Prefer practical questions over theory.
 - Maximum 35 words.
@@ -331,8 +424,9 @@ Return ONLY JSON.
 
     const completion =
       await client.chat.completions.create({
-        model: "llama-3.3-70b-versatile",
-        temperature: 0.2,
+        model: MODEL,
+        temperature: 0.4,
+        response_format: { type: "json_object" },
         messages: [
           {
             role: "system",
@@ -352,6 +446,23 @@ Return ONLY JSON.
 
     const parsed = safeParseJSON(content);
 
+    let nextQuestion = normalizeQuestion(
+      parsed.nextQuestion
+    );
+
+    if (
+      isDuplicateQuestion(
+        nextQuestion,
+        interview.conversation
+      )
+    ) {
+      nextQuestion = pickFallbackQuestion(
+        interview.conversation,
+        interview.role,
+        resume.skills
+      );
+    }
+
     interview.conversation[current].score =
       clampScore(parsed.score);
 
@@ -361,8 +472,7 @@ Return ONLY JSON.
     interview.currentQuestion++;
 
     interview.conversation.push({
-      question:
-        parsed.nextQuestion || "Tell me more.",
+      question: nextQuestion,
       answer: "",
       score: 0,
       feedback: "",
@@ -394,13 +504,9 @@ Candidate Skills:
 
 ${resume.skills.join(", ")}
 
-Interview Conversation:
+Interview Conversation (score the LATEST answer, the last question-answer pair):
 
 ${history}
-
-The latest answer to evaluate is:
-
-"${answer}"
 
 ==========================
 Evaluation Rules
@@ -454,8 +560,9 @@ Return ONLY JSON.
 
   const evalCompletion =
     await client.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: MODEL,
       temperature: 0.2,
+      response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
@@ -587,8 +694,9 @@ Return ONLY valid JSON.
 
   const finalCompletion =
     await client.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: MODEL,
       temperature: 0.2,
+      response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
@@ -619,10 +727,12 @@ Return ONLY valid JSON.
     overall: clampScore(parsedFinal.overall),
     recommendation:
       parsedFinal.recommendation ?? "Not Recommended",
-    strengths: parsedFinal.strengths ?? [],
-    improvements: parsedFinal.improvements ?? [],
+    strengths: asStringArray(parsedFinal.strengths),
+    improvements: asStringArray(parsedFinal.improvements),
     finalFeedback:
-      parsedFinal.finalFeedback ?? "",
+      typeof parsedFinal.finalFeedback === "string"
+        ? parsedFinal.finalFeedback
+        : "",
   };
 
   await interview.save();

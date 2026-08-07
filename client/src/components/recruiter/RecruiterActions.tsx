@@ -71,6 +71,13 @@ export default function RecruiterActions({
       | "INTERVIEW"
       | "PENDING"
   ) => {
+    if (status === "INTERVIEW") {
+      router.push(
+        `/schedule?candidateId=${candidate.user._id}`
+      );
+      return;
+    }
+
     if (status === currentStatus) {
       toast.info(
         `Candidate is already ${status.toLowerCase()}`
@@ -100,12 +107,6 @@ export default function RecruiterActions({
         );
         setShowNotes(false);
         setNotes("");
-
-        if (selectedStatus === "INTERVIEW") {
-          router.push(
-            `/schedule?candidateId=${candidate.user._id}`
-          );
-        }
 
         onStatusChange?.(selectedStatus);
       } else {

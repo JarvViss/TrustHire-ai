@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   useQuery,
   useMutation,
@@ -8,10 +9,13 @@ import {
 } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { Bell } from "lucide-react";
+import { useAuthStore } from "@/store/auth.store";
 
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
   const queryClient = useQueryClient();
+  const token = useAuthStore((state) => state.token);
 
   const { data } = useQuery({
     queryKey: ["notifications"],
@@ -21,7 +25,9 @@ export default function NotificationBell() {
       );
       return data;
     },
-    refetchInterval: 30000,
+    enabled: !!token,
+    refetchInterval: token ? 30000 : false,
+    refetchOnWindowFocus: false,
   });
 
   const markRead = useMutation({
@@ -105,6 +111,10 @@ export default function NotificationBell() {
                           markRead.mutate(
                             n._id
                           );
+                        if (n.link) {
+                          router.push(n.link);
+                          setOpen(false);
+                        }
                       }}
                       className={`cursor-pointer border-b border-slate-100 p-4 transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 ${
                         !n.read

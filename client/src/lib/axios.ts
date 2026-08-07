@@ -6,6 +6,7 @@ const api = axios.create({
     process.env.NEXT_PUBLIC_API_URL ||
     "http://localhost:5000/api",
   withCredentials: true,
+  timeout: 120000,
 });
 
 api.interceptors.request.use((config) => {
@@ -17,5 +18,19 @@ api.interceptors.request.use((config) => {
 
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (
+      error?.response?.status === 401 &&
+      useAuthStore.getState().token
+    ) {
+      useAuthStore.getState().logout();
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export default api;

@@ -38,13 +38,25 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "trusthire-auth",
-      version: 2,
+      version: 3,
       partialize: (state) => ({
         user: state.user,
+        token: state.token,
       }),
+      migrate: (persisted: any) => {
+        const state = persisted ?? {};
+        if (state.version === 2 && state.state) {
+          return {
+            user: state.state.user ?? null,
+            token: null,
+          };
+        }
+        return state;
+      },
       merge: (persisted: any, current) => ({
         ...current,
         user: persisted?.user ?? current.user,
+        token: persisted?.token ?? current.token,
       }),
     }
   )

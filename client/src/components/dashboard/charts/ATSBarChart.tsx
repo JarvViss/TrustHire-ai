@@ -104,7 +104,7 @@ export default function ATSBarChart({
               type="category"
               dataKey="name"
               width={110}
-              tick={{ fontSize: 13, fontWeight: 600, fill: "#e2e8f0" }}
+              tick={{ fontSize: 13, fontWeight: 600, fill: "#64748b" }}
             />
 
             <Tooltip
@@ -149,6 +149,7 @@ export default function ATSBarChart({
                 style={{
                   fontWeight: 700,
                   fontSize: 14,
+                  fill: "#64748b",
                 }}
               />
             </Bar>

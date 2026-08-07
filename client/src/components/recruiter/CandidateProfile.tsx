@@ -6,7 +6,6 @@ import CandidateScores from "./CandidateScores";
 import ResumeSummaryCard from "./ResumeSummaryCard";
 import ResumeViewer from "./ResumeViewer";
 import SkillsCard from "./SkillsCard";
-import InterviewReportCard from "./InterviewReportCard";
 import VerificationCard from "./VerificationCard";
 import RecruiterActions from "./RecruiterActions";
 
@@ -68,11 +67,6 @@ export default function CandidateProfile({
           <SkillsCard
             skills={candidate.resume?.skills ?? []}
             missingSkills={allMissingSkills}
-          />
-
-          <InterviewReportCard
-            result={candidate.interview?.result}
-            role={candidate.interview?.role}
           />
 
         </div>

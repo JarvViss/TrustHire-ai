@@ -10,8 +10,8 @@ import Navbar from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import Link from "next/link";
-import { Calendar, Clock, Video, Phone, MapPin, User, ArrowLeft } from "lucide-react";
+import LiveInterviewPanel from "@/components/recruiter/LiveInterviewPanel";
+import { Calendar, Clock, Video, Phone, MapPin, User, Mic, RefreshCw, Link2 } from "lucide-react";
 
 export default function SchedulePage() {
   return (
@@ -31,6 +31,8 @@ function ScheduleContent() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+  const [activeInterview, setActiveInterview] =
+    useState<string>("");
   const [candidateName, setCandidateName] = useState("");
   const [candidateEmail, setCandidateEmail] = useState("");
   const [form, setForm] = useState({
@@ -38,11 +40,20 @@ function ScheduleContent() {
     scheduledAt: "",
     duration: "30",
     type: "ONLINE",
+    role: "",
     notes: "",
+    meetingLink: "",
   });
 
+  const candidateId = searchParams.get("candidateId") ?? "";
+
+  const now = new Date();
+  now.setMinutes(
+    now.getMinutes() - now.getTimezoneOffset()
+  );
+  const nowStr = now.toISOString().slice(0, 16);
+
   useEffect(() => {
-    const candidateId = searchParams.get("candidateId");
     if (candidateId) {
       setForm((prev) => ({ ...prev, candidateId }));
       setShowForm(true);
@@ -56,9 +67,9 @@ function ScheduleContent() {
         })
         .catch(() => {});
     }
-  }, [searchParams]);
+  }, [candidateId]);
 
-  const { data: schedule } = useQuery({
+  const { data: schedule, isLoading, isError, refetch } = useQuery({
     queryKey: ["schedule"],
     queryFn: async () => {
       const { data } = await api.get("/schedule");
@@ -66,11 +77,28 @@ function ScheduleContent() {
     },
   });
 
+  const { data: candidates } = useQuery({
+    queryKey: ["recruiter-candidates"],
+    queryFn: async () => {
+      const { data } = await api.get("/recruiter/candidates");
+      return data.candidates;
+    },
+  });
+
+  const selectCandidate = (id: string) => {
+    const c = candidates?.find(
+      (x: any) => x.id === id
+    );
+    setForm((prev) => ({ ...prev, candidateId: id }));
+    setCandidateName(c?.name ?? "");
+    setCandidateEmail(c?.email ?? "");
+  };
+
   const createSchedule = useMutation({
     mutationFn: async (formData: typeof form) => {
       await api.post("/schedule", {
         ...formData,
-        duration: Number(formData.duration),
+        duration: Number(formData.duration) || 30,
       });
     },
     onSuccess: () => {
@@ -80,8 +108,11 @@ function ScheduleContent() {
         queryKey: ["schedule"],
       });
     },
-    onError: () => {
-      toast.error("Failed to schedule interview");
+    onError: (err: any) => {
+      toast.error(
+        err?.response?.data?.message ||
+          "Failed to schedule interview"
+      );
     },
   });
 
@@ -96,6 +127,37 @@ function ScheduleContent() {
       });
     },
   });
+
+  const updateMeetingLink = useMutation({
+    mutationFn: async ({
+      id,
+      meetingLink,
+    }: {
+      id: string;
+      meetingLink: string;
+    }) => {
+      await api.patch(`/schedule/${id}/link`, {
+        meetingLink,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Meeting link updated");
+      setEditingLink("");
+      setLinkDraft("");
+      queryClient.invalidateQueries({
+        queryKey: ["schedule"],
+      });
+    },
+    onError: (err: any) => {
+      toast.error(
+        err?.response?.data?.message ||
+          "Failed to update meeting link"
+      );
+    },
+  });
+
+  const [editingLink, setEditingLink] = useState("");
+  const [linkDraft, setLinkDraft] = useState("");
 
   const TYPE_ICONS: Record<string, any> = {
     ONLINE: Video,
@@ -113,11 +175,9 @@ function ScheduleContent() {
             Interview Schedule
           </h1>
 
-          {form.candidateId && (
-            <Button onClick={() => setShowForm(!showForm)}>
-              {showForm ? "Cancel" : "Schedule Interview"}
-            </Button>
-          )}
+          <Button onClick={() => setShowForm(!showForm)}>
+            {showForm ? "Cancel" : "New Interview"}
+          </Button>
         </div>
 
         {showForm && (
@@ -129,15 +189,16 @@ function ScheduleContent() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                if (!form.candidateId) {
+                  toast.error("Please select a candidate");
+                  return;
+                }
                 createSchedule.mutate(form);
               }}
               className="space-y-4"
             >
               {form.candidateId ? (
-                <div className="rounded-2xl border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
-                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-green-700 dark:text-green-400">
-                    Scheduling Interview For
-                  </label>
+                <div className="flex items-center justify-between rounded-2xl border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
                   <div className="flex items-center gap-3">
                     <User className="h-5 w-5 text-green-600 dark:text-green-400" />
                     <div>
@@ -151,25 +212,67 @@ function ScheduleContent() {
                       )}
                     </div>
                   </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setForm((prev) => ({
+                        ...prev,
+                        candidateId: "",
+                      }));
+                      setCandidateName("");
+                      setCandidateEmail("");
+                    }}
+                  >
+                    Change
+                  </Button>
                 </div>
               ) : (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-slate-800">
-                  <User className="mx-auto mb-3 h-8 w-8 text-slate-400" />
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Go to a candidate's profile and click{" "}
-                    <strong>Schedule Interview</strong> to get started.
-                  </p>
-                  <Link
-                    href="/recruiter/dashboard"
-                    className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                <div>
+                  <label className="mb-2 block text-sm font-semibold dark:text-slate-300">
+                    Candidate
+                  </label>
+                  <select
+                    value={form.candidateId}
+                    onChange={(e) =>
+                      selectCandidate(e.target.value)
+                    }
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
                   >
-                    <ArrowLeft className="h-3.5 w-3.5" />
-                    Browse Candidates
-                  </Link>
+                    <option value="">
+                      Select a candidate...
+                    </option>
+                    {candidates?.map((c: any) => (
+                      <option
+                        key={c.id}
+                        value={c.id}
+                      >
+                        {c.name} ({c.email})
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )}
 
               <div className="grid gap-4 md:grid-cols-3">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold dark:text-slate-300">
+                    Job Role
+                  </label>
+                  <Input
+                    type="text"
+                    value={form.role}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        role: e.target.value,
+                      })
+                    }
+                    placeholder="e.g. React Developer"
+                  />
+                </div>
+
                 <div>
                   <label className="mb-2 block text-sm font-semibold dark:text-slate-300">
                     Date & Time
@@ -177,6 +280,7 @@ function ScheduleContent() {
                   <Input
                     type="datetime-local"
                     value={form.scheduledAt}
+                    min={nowStr}
                     onChange={(e) =>
                       setForm({
                         ...form,
@@ -232,6 +336,26 @@ function ScheduleContent() {
 
               <div>
                 <label className="mb-2 block text-sm font-semibold dark:text-slate-300">
+                  Meeting Link{" "}
+                  <span className="font-normal text-slate-400">
+                    (optional)
+                  </span>
+                </label>
+                <Input
+                  type="url"
+                  value={form.meetingLink}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      meetingLink: e.target.value,
+                    })
+                  }
+                  placeholder="Paste Google Meet / Zoom / MS Teams link"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold dark:text-slate-300">
                   Notes
                 </label>
                 <Textarea
@@ -260,7 +384,27 @@ function ScheduleContent() {
         )}
 
         <div className="space-y-4">
-          {!schedule?.length ? (
+          {isLoading ? (
+            <div className="rounded-3xl border border-slate-200 bg-white p-16 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+              <Calendar className="mx-auto mb-4 h-12 w-12 animate-pulse text-slate-300 dark:text-slate-600" />
+              <h2 className="text-2xl font-bold dark:text-white">
+                Loading interviews...
+              </h2>
+            </div>
+          ) : isError ? (
+            <div className="rounded-3xl border border-red-200 bg-white p-16 text-center shadow-sm dark:border-red-800 dark:bg-slate-900">
+              <h2 className="text-2xl font-bold dark:text-white">
+                Failed to load interviews
+              </h2>
+              <button
+                onClick={() => refetch()}
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 font-semibold text-white transition hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+              >
+                <RefreshCw size={16} />
+                Retry
+              </button>
+            </div>
+          ) : !schedule?.length ? (
             <div className="rounded-3xl border border-slate-200 bg-white p-16 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
               <Calendar className="mx-auto mb-4 h-12 w-12 text-slate-300 dark:text-slate-600" />
               <h2 className="text-2xl font-bold dark:text-white">
@@ -340,8 +484,133 @@ function ScheduleContent() {
                             Cancel
                           </Button>
                         )}
+
+                      {s.status !== "CANCELLED" && (
+                        <Button
+                          variant={
+                            activeInterview === s._id
+                              ? "ghost"
+                              : "default"
+                          }
+                          size="sm"
+                          className="gap-2"
+                          onClick={() =>
+                            setActiveInterview(
+                              activeInterview === s._id
+                                ? ""
+                                : s._id
+                            )
+                          }
+                        >
+                          <Mic size={14} />
+                          {s.status === "COMPLETED"
+                            ? "View Interview"
+                            : s.status === "IN_PROGRESS"
+                            ? "Continue Interview"
+                            : "Conduct Interview"}
+                        </Button>
+                      )}
                     </div>
                   </div>
+
+                  {activeInterview === s._id && (
+                    <LiveInterviewPanel
+                      schedule={s}
+                    />
+                  )}
+
+                  {(s.status === "SCHEDULED" ||
+                    s.status === "IN_PROGRESS") &&
+                    (editingLink === s._id ? (
+                    <div className="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-4 dark:border-slate-800 sm:flex-row">
+                      <Input
+                        type="url"
+                        value={linkDraft}
+                        onChange={(e) =>
+                          setLinkDraft(e.target.value)
+                        }
+                        placeholder="Paste Google Meet / Zoom / MS Teams link"
+                      />
+                      <div className="flex shrink-0 gap-2">
+                        <Button
+                          size="sm"
+                          disabled={
+                            updateMeetingLink.isPending
+                          }
+                          onClick={() =>
+                            updateMeetingLink.mutate({
+                              id: s._id,
+                              meetingLink: linkDraft,
+                            })
+                          }
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditingLink("");
+                            setLinkDraft("");
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 dark:border-slate-800 md:flex-row md:items-center md:justify-between">
+                      <div className="flex min-w-0 items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                        <Link2 className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
+                        {s.meetingLink ? (
+                          <a
+                            href={s.meetingLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="truncate text-blue-600 hover:underline dark:text-blue-400"
+                          >
+                            {s.meetingLink}
+                          </a>
+                        ) : (
+                          <span>
+                            No meeting link yet
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex shrink-0 gap-2">
+                        {s.meetingLink && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              navigator.clipboard?.writeText(
+                                s.meetingLink
+                              );
+                              toast.success(
+                                "Link copied"
+                              );
+                            }}
+                          >
+                            Copy
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setEditingLink(s._id);
+                            setLinkDraft(
+                              s.meetingLink ?? ""
+                            );
+                          }}
+                        >
+                          {s.meetingLink
+                            ? "Edit"
+                            : "Add link"}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               );
             })

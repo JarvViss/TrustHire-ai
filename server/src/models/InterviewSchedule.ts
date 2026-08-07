@@ -31,15 +31,87 @@ const InterviewScheduleSchema = new mongoose.Schema(
       default: "ONLINE",
     },
 
+    meetingLink: {
+      type: String,
+      default: "",
+    },
+
     notes: {
       type: String,
       default: "",
+    },
+
+    role: {
+      type: String,
+      default: "",
+    },
+
+    questions: {
+      type: [String],
+      default: [],
+    },
+
+    answers: {
+      type: [
+        {
+          question: {
+            type: String,
+            default: "",
+          },
+          answer: {
+            type: String,
+            default: "",
+          },
+          rating: {
+            type: Number,
+            min: 0,
+            max: 5,
+            default: 0,
+          },
+          notes: {
+            type: String,
+            default: "",
+          },
+        },
+      ],
+      default: [],
+    },
+
+    summary: {
+      type: {
+        overall: {
+          type: Number,
+          default: 0,
+        },
+        recommendation: {
+          type: String,
+          default: "",
+        },
+        strengths: {
+          type: [String],
+          default: [],
+        },
+        improvements: {
+          type: [String],
+          default: [],
+        },
+        feedback: {
+          type: String,
+          default: "",
+        },
+      },
+      default: undefined,
+    },
+
+    completedAt: {
+      type: Date,
     },
 
     status: {
       type: String,
       enum: [
         "SCHEDULED",
+        "IN_PROGRESS",
         "COMPLETED",
         "CANCELLED",
       ],

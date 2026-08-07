@@ -28,10 +28,13 @@ export default function DashboardPage() {
 
   const { data, isLoading } = useMyResumes();
 
+  const activeAnalysis =
+    analysis ?? data?.data?.[0] ?? null;
+
   const { data: statsData, isError } = useQuery({
     queryKey: RESUME_KEYS.stats,
     queryFn: getResumeStats,
-    enabled: !!analysis,
+    enabled: !!activeAnalysis,
   });
 
   useEffect(() => {
@@ -40,7 +43,7 @@ export default function DashboardPage() {
     }
   }, [analysis, data, setAnalysis]);
 
-  if (isLoading && !analysis) {
+  if (isLoading && !activeAnalysis) {
     return (
       <AuthGuard>
         <Navbar />
@@ -52,7 +55,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (!analysis) {
+  if (!activeAnalysis) {
     return (
       <AuthGuard>
         <Navbar />
@@ -74,20 +77,20 @@ export default function DashboardPage() {
         <DashboardHeader />
 
         <div className="grid gap-8 lg:grid-cols-2">
-          <ATSScoreCard score={analysis.atsScore} />
+          <ATSScoreCard score={activeAnalysis.atsScore} />
 
-          <SummaryCard summary={analysis.summary} />
+          <SummaryCard summary={activeAnalysis.summary} />
         </div>
 
-        <SkillsCard skills={analysis.skills} />
+        <SkillsCard skills={activeAnalysis.skills} />
 
         <div className="grid gap-8 lg:grid-cols-2">
-          <StrengthsCard strengths={analysis.strengths} />
+          <StrengthsCard strengths={activeAnalysis.strengths} />
 
-          <MissingSkillsCard skills={analysis.missingSkills} />
+          <MissingSkillsCard skills={activeAnalysis.missingSkills} />
         </div>
 
-        <SuggestionsCard suggestions={analysis.suggestions} />
+        <SuggestionsCard suggestions={activeAnalysis.suggestions} />
 
         <div className="grid gap-8 lg:grid-cols-2">
           {stats ? (
@@ -113,7 +116,7 @@ export default function DashboardPage() {
           {stats ? (
             <SkillsChart
               skillsFrequency={stats.skillsFrequency}
-              userSkills={analysis.skills}
+              userSkills={activeAnalysis.skills}
             />
           ) : (
             <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900">

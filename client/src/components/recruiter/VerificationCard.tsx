@@ -7,6 +7,7 @@ import {
   Copy,
   Fingerprint,
   Hash,
+  Link2,
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/axios";
@@ -21,9 +22,15 @@ export default function VerificationCard({
   onVerified,
 }: Props) {
   const [verifying, setVerifying] = useState(false);
-
-  const verified = user?.isVerified;
-  const txHash = user?.verificationHash || "";
+  const [verified, setVerified] = useState(
+    Boolean(user?.isVerified)
+  );
+  const [hash, setHash] = useState(
+    user?.verificationHash || ""
+  );
+  const [txHash, setTxHash] = useState(
+    user?.verificationTxHash || ""
+  );
 
   const copy = (text: string) => {
     if (!text) return;
@@ -38,6 +45,13 @@ export default function VerificationCard({
         `/recruiter/candidate/${user._id}/verify`
       );
       if (res.data.success) {
+        setVerified(true);
+        setHash(
+          res.data.candidate?.verificationHash || ""
+        );
+        setTxHash(
+          res.data.candidate?.verificationTxHash || ""
+        );
         toast.success("Candidate verified");
         onVerified?.();
       } else {
@@ -81,28 +95,53 @@ export default function VerificationCard({
         )}
       </div>
 
-      {verified && txHash && (
-        <div className="mt-8 rounded-2xl bg-slate-50 p-5 dark:bg-slate-800">
-          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-            <Hash size={14} />
-            Verification Hash (SHA-256)
+      {verified && (hash || txHash) && (
+        <div className="mt-8 space-y-4 rounded-2xl bg-slate-50 p-5 dark:bg-slate-800">
+          <div>
+            <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+              <Hash size={14} />
+              Verification Hash (SHA-256)
+            </div>
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <p className="truncate font-mono text-sm dark:text-slate-200">
+                {hash}
+              </p>
+              <button
+                onClick={() => copy(hash)}
+                className="shrink-0 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              >
+                <Copy size={18} />
+              </button>
+            </div>
           </div>
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <p className="truncate font-mono text-sm dark:text-slate-200">
-              {txHash}
-            </p>
-            <button
-              onClick={() => copy(txHash)}
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-            >
-              <Copy size={18} />
-            </button>
-          </div>
-          <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+
+          {txHash && (
+            <div>
+              <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                <Link2 size={14} />
+                Transaction Hash (on-chain)
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <p className="truncate font-mono text-sm dark:text-slate-200">
+                  {txHash}
+                </p>
+                <button
+                  onClick={() => copy(txHash)}
+                  className="shrink-0 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                >
+                  <Copy size={18} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          <p className="text-xs text-slate-400 dark:text-slate-500">
             This hash is computed from the
             candidate's name, email, resume ID, and
-            interview score. It can be independently
-            verified to confirm credential integrity.
+            interview score. When blockchain is
+            configured, it is stored on-chain and
+            anyone can verify it via the public
+            endpoint.
           </p>
         </div>
       )}

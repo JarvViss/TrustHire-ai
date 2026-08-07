@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { AuthRequest } from "./auth.middleware";
 
 interface RateLimitStore {
   [key: string]: {
@@ -23,18 +24,23 @@ const cleanupTimer = setInterval(() => {
 
 cleanupTimer.unref?.();
 
+type KeyResolver = (req: Request) => string;
+
 export function rateLimit({
   windowMs = 60 * 1000,
   max = 60,
   message = "Too many requests, please try again later",
+  keyFor,
 }: {
   windowMs?: number;
   max?: number;
   message?: string;
+  keyFor?: KeyResolver;
 } = {}) {
   return (req: Request, res: Response, next: NextFunction) => {
-    const key =
-      req.ip ?? req.socket.remoteAddress ?? "unknown";
+    const key = keyFor
+      ? keyFor(req)
+      : `ip:${req.ip ?? req.socket.remoteAddress ?? "unknown"}`;
     const now = Date.now();
 
     if (
@@ -61,10 +67,19 @@ export function rateLimit({
   };
 }
 
+const aiKeyFor = (req: Request): string => {
+  const userId = (req as AuthRequest).userId;
+
+  return userId
+    ? `user:${userId}`
+    : `ip:${req.ip ?? req.socket.remoteAddress ?? "unknown"}`;
+};
+
 export const aiRateLimit = rateLimit({
   windowMs: 60 * 1000,
-  max: 10,
+  max: 30,
   message: "Too many AI requests. Please wait a minute.",
+  keyFor: aiKeyFor,
 });
 
 export const authRateLimit = rateLimit({

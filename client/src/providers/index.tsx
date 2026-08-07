@@ -3,6 +3,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { ThemeProvider } from "@/components/common/ThemeProvider";
+import { useAuthBootstrap } from "@/hooks/useAuthBootstrap";
+
+function SessionBootstrap({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  useAuthBootstrap();
+  return <>{children}</>;
+}
 
 export default function Providers({
   children,
@@ -23,7 +33,9 @@ export default function Providers({
 
   return (
     <QueryClientProvider client={client}>
-      <ThemeProvider>{children}</ThemeProvider>
+      <ThemeProvider>
+        <SessionBootstrap>{children}</SessionBootstrap>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

@@ -27,9 +27,24 @@ if (clientUrl) {
   allowedOrigins.push(clientUrl);
 }
 
+const isProduction = process.env.NODE_ENV === "production";
+
+const isLocalhostOrigin = (origin: string): boolean => {
+  try {
+    const { hostname } = new URL(origin);
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+  } catch {
+    return false;
+  }
+};
+
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin || allowedOrigins.includes(origin)) {
+      return cb(null, true);
+    }
+
+    if (!isProduction && isLocalhostOrigin(origin)) {
       return cb(null, true);
     }
 
