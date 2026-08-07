@@ -46,10 +46,15 @@ export const register = async (
       userRole as UserRole
     );
 
+    setAuthCookie(res, data.token);
+
     res.status(201).json({
       success: true,
       message: data.message,
-      data: data.user,
+      data: {
+        user: data.user,
+        token: data.token,
+      },
     });
   } catch (error) {
     next(error);

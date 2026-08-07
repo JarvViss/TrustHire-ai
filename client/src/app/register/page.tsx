@@ -9,10 +9,12 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 import { registerUser } from "@/services/auth.service";
+import { useAuthStore } from "@/store/auth.store";
 import Link from "next/link";
 
 export default function RegisterPage() {
     const router = useRouter();
+    const login = useAuthStore((state) => state.login);
 
     const [loading, setLoading] = useState(false);
 
@@ -42,13 +44,17 @@ export default function RegisterPage() {
         try {
             const res = await registerUser(form);
 
+            login(res.data.user, res.data.token);
+
             toast.success(
                 res.message ??
-                "Account created! Verify your email to continue."
+                "Account created!"
             );
 
             router.push(
-                `/verify-email?email=${encodeURIComponent(form.email)}`
+                res.data.user.role === "recruiter"
+                    ? "/recruiter/dashboard"
+                    : "/dashboard"
             );
         } catch (error: any) {
             toast.error(

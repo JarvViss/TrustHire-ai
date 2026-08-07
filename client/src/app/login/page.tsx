@@ -53,15 +53,6 @@ export default function LoginPage() {
         router.push("/dashboard");
       }
     } catch (error: any) {
-      if (error?.response?.status === 403) {
-        toast.error("Please verify your email first");
-        router.push(
-          `/verify-email?email=${encodeURIComponent(form.email)}`
-        );
-        setLoading(false);
-        return;
-      }
-
       toast.error(
         error?.response?.data?.message ||
           "Login failed"
