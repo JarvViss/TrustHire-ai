@@ -276,12 +276,15 @@ export async function generateQuestionsForSchedule(
 
   schedule.role = finalRole;
   schedule.questions = questions;
-  schedule.answers = questions.map((question) => ({
-    question,
-    answer: "",
-    rating: 0,
-    notes: "",
-  }));
+  schedule.answers.splice(0, schedule.answers.length);
+  questions.forEach((question) => {
+    schedule.answers.push({
+      question,
+      answer: "",
+      rating: 0,
+      notes: "",
+    });
+  });
   schedule.status = "IN_PROGRESS";
 
   await schedule.save();
