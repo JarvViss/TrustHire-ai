@@ -11,6 +11,12 @@ const rawApiUrl =
 
 export const API_BASE_URL = rawApiUrl.replace(/\/api\/?$/, "");
 
+export function resolveMediaUrl(url?: string | null) {
+  if (!url) return "";
+  if (/^https?:\/\//.test(url)) return url;
+  return `${API_BASE_URL}${url}`;
+}
+
 export function avatarFallback(name?: string | null) {
   return `https://ui-avatars.com/api/?background=2563eb&color=fff&name=${encodeURIComponent(name || "User")}`;
 }

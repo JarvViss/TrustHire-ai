@@ -10,9 +10,10 @@ import { Input } from "@/components/ui/input";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
-  const tokenParam = searchParams.get("token") ?? "";
+  const initialEmail = searchParams.get("email") ?? "";
 
-  const [token, setToken] = useState(tokenParam);
+  const [email, setEmail] = useState(initialEmail);
+  const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,16 +36,18 @@ function ResetPasswordForm() {
 
     setLoading(true);
     try {
-      await api.post("/auth/reset-password", {
-        token,
-        password,
-      });
+      const { data } = await api.post(
+        "/auth/reset-password",
+        { email, code, password }
+      );
       setSuccess(true);
-      toast.success("Password reset successful!");
+      toast.success(
+        data.message ?? "Password reset successful!"
+      );
     } catch (err: any) {
       toast.error(
         err?.response?.data?.message ||
-          "Invalid or expired token"
+          "Invalid or expired reset code"
       );
     } finally {
       setLoading(false);
@@ -79,8 +82,8 @@ function ResetPasswordForm() {
           Reset Password
         </h1>
         <p className="mb-8 text-sm text-slate-500 dark:text-slate-400">
-          Paste your reset token and choose a new
-          password.
+          Enter the 6-digit code from your email and
+          choose a new password.
         </p>
 
         <form
@@ -89,12 +92,32 @@ function ResetPasswordForm() {
         >
           <div>
             <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">
-              Reset Token
+              Email
             </label>
             <Input
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              placeholder="Paste token from email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Reset Code
+            </label>
+            <Input
+              value={code}
+              onChange={(e) =>
+                setCode(
+                  e.target.value
+                    .replace(/\D/g, "")
+                    .slice(0, 6)
+                )
+              }
+              placeholder="6-digit code from email"
+              inputMode="numeric"
+              maxLength={6}
               required
             />
           </div>
@@ -138,6 +161,13 @@ function ResetPasswordForm() {
               ? "Resetting..."
               : "Reset Password"}
           </Button>
+
+          <Link
+            href="/forgot-password"
+            className="block text-center text-sm text-blue-600 hover:underline dark:text-blue-400"
+          >
+            Didn&apos;t get a code? Request again
+          </Link>
 
           <Link
             href="/login"

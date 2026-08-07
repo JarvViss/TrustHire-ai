@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import api from "@/lib/axios";
@@ -8,10 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export default function ForgotPasswordPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [resetToken, setResetToken] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,11 +21,13 @@ export default function ForgotPasswordPage() {
         "/auth/forgot-password",
         { email }
       );
-      setSent(true);
-      if (data.resetToken) {
-        setResetToken(data.resetToken);
-      }
-      toast.success("Reset link sent to your email");
+      toast.success(
+        data.message ||
+          "If an account exists, a reset code has been sent."
+      );
+      router.push(
+        `/reset-password?email=${encodeURIComponent(email)}`
+      );
     } catch (err: any) {
       toast.error(
         err?.response?.data?.message ||
@@ -44,66 +46,33 @@ export default function ForgotPasswordPage() {
         </h1>
         <p className="mb-8 text-sm text-slate-500 dark:text-slate-400">
           Enter your email and we&apos;ll send you a
-          reset link.
+          6-digit reset code.
         </p>
 
-        {sent ? (
-          <div className="space-y-4">
-            <div className="rounded-xl bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
-              If an account exists with that email,
-              a reset link has been sent.
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-            {resetToken && (
-              <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
-                <p className="font-semibold">
-                  Dev Mode — Reset Token:
-                </p>
-                <code className="mt-1 block break-all font-mono text-xs">
-                  {resetToken}
-                </code>
-              </div>
-            )}
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loading}
+          >
+            {loading ? "Sending..." : "Send Reset Code"}
+          </Button>
 
-            <Link href="/reset-password">
-              <Button className="w-full">
-                Reset Password
-              </Button>
-            </Link>
-
-            <Link
-              href="/login"
-              className="block text-center text-sm text-blue-600 hover:underline dark:text-blue-400"
-            >
-              Back to Login
-            </Link>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? "Sending..." : "Send Reset Link"}
-            </Button>
-
-            <Link
-              href="/login"
-              className="block text-center text-sm text-blue-600 hover:underline dark:text-blue-400"
-            >
-              Back to Login
-            </Link>
-          </form>
-        )}
+          <Link
+            href="/login"
+            className="block text-center text-sm text-blue-600 hover:underline dark:text-blue-400"
+          >
+            Back to Login
+          </Link>
+        </form>
       </div>
     </div>
   );

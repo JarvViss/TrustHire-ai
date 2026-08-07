@@ -9,7 +9,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { API_BASE_URL, avatarFallback } from "@/lib/utils";
+import { avatarFallback, resolveMediaUrl } from "@/lib/utils";
 
 interface Props {
   candidates: any[];
@@ -161,7 +161,7 @@ export default function CandidateList({
                   <img
                     src={
                       candidate.profileImage
-                        ? `${API_BASE_URL}${candidate.profileImage}`
+                        ? resolveMediaUrl(candidate.profileImage)
                         : avatarFallback(candidate.name)
                     }
                     onError={(e) => {

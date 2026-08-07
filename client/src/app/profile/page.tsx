@@ -22,9 +22,7 @@ import {
   useUploadImage,
 } from "@/hooks/useProfile";
 import { useAuthStore } from "@/store/auth.store";
-import { API_BASE_URL, avatarFallback } from "@/lib/utils";
-
-const API_BASE = API_BASE_URL;
+import { avatarFallback, resolveMediaUrl } from "@/lib/utils";
 
 export default function ProfilePage() {
   const { data, isLoading } = useProfile();
@@ -63,8 +61,8 @@ export default function ProfilePage() {
         portfolio: user.portfolio ?? "",
         location: user.location ?? "",
       });
-      setCoverPreview(user.coverImage ? `${API_BASE}${user.coverImage}` : "");
-      setProfilePreview(user.profileImage ? `${API_BASE}${user.profileImage}` : "");
+      setCoverPreview(resolveMediaUrl(user.coverImage));
+      setProfilePreview(resolveMediaUrl(user.profileImage));
     }
   }, [user]);
 
@@ -110,13 +108,9 @@ export default function ProfilePage() {
     } catch {
       toast.error("Upload failed");
       if (type === "cover") {
-        setCoverPreview(
-          user?.coverImage ? `${API_BASE}${user.coverImage}` : ""
-        );
+        setCoverPreview(resolveMediaUrl(user?.coverImage));
       } else {
-        setProfilePreview(
-          user?.profileImage ? `${API_BASE}${user.profileImage}` : ""
-        );
+        setProfilePreview(resolveMediaUrl(user?.profileImage));
       }
     }
   };

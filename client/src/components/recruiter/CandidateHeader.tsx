@@ -12,10 +12,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/axios";
-import { API_BASE_URL, avatarFallback } from "@/lib/utils";
+import { avatarFallback, resolveMediaUrl } from "@/lib/utils";
 import { escapeHtml } from "@/lib/sanitize";
-
-const API_BASE = API_BASE_URL;
 
 interface Props {
   user: any;
@@ -28,7 +26,7 @@ export default function CandidateHeader({
 }: Props) {
   const handleDownload = async () => {
     if (resume?.fileUrl) {
-      const url = `${API_BASE}${resume.fileUrl}`;
+      const url = resolveMediaUrl(resume.fileUrl);
       const a = document.createElement("a");
       a.href = url;
       a.download = resume.filename || "resume.pdf";
@@ -90,7 +88,7 @@ ${resume.missingSkills?.length ? `<h2>Missing Skills</h2><ul>${resume.missingSki
   const [coverBroken, setCoverBroken] = useState(false);
 
   const profileSrc = user?.profileImage
-    ? `${API_BASE}${user.profileImage}`
+    ? resolveMediaUrl(user.profileImage)
     : avatarFallback(user?.name);
 
   const links = [
@@ -118,7 +116,7 @@ ${resume.missingSkills?.length ? `<h2>Missing Skills</h2><ul>${resume.missingSki
         style={
           user?.coverImage && !coverBroken
             ? {
-                backgroundImage: `url(${API_BASE}${user.coverImage})`,
+                backgroundImage: `url(${resolveMediaUrl(user.coverImage)})`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
               }
@@ -130,7 +128,7 @@ ${resume.missingSkills?.length ? `<h2>Missing Skills</h2><ul>${resume.missingSki
         )}
         {user?.coverImage && (
           <img
-            src={`${API_BASE}${user.coverImage}`}
+            src={resolveMediaUrl(user.coverImage)}
             alt=""
             className="hidden"
             onError={() => setCoverBroken(true)}

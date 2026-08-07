@@ -9,7 +9,7 @@ import Navbar from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Trash2, ShieldCheck } from "lucide-react";
-import { API_BASE_URL } from "@/lib/utils";
+import { resolveMediaUrl } from "@/lib/utils";
 
 export default function AdminUsersPage() {
   const [search, setSearch] = useState("");
@@ -115,7 +115,7 @@ export default function AdminUsersPage() {
                         <img
                           src={
                             user.profileImage
-                              ? `${API_BASE_URL}${user.profileImage}`
+                              ? resolveMediaUrl(user.profileImage)
                               : `https://ui-avatars.com/api/?background=2563eb&color=fff&name=${encodeURIComponent(user.name || "User")}`
                           }
                           className="h-8 w-8 rounded-full object-cover"

@@ -40,11 +40,16 @@ export default function RegisterPage() {
         setLoading(true);
 
         try {
-            await registerUser(form);
+            const res = await registerUser(form);
 
-            toast.success("Account created successfully!");
+            toast.success(
+                res.message ??
+                "Account created! Verify your email to continue."
+            );
 
-            router.push("/login");
+            router.push(
+                `/verify-email?email=${encodeURIComponent(form.email)}`
+            );
         } catch (error: any) {
             toast.error(
                 error?.response?.data?.message ??
